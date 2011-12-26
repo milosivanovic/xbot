@@ -1,0 +1,7 @@
+#!/usr/bin/python
+
+import xbot
+
+if __name__ == "__main__":
+	bot = xbot.Initialise(['chat.au.freenode.net', 'chat.freenode.net'], 7070)
+	bot.run()
