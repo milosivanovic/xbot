@@ -30,7 +30,7 @@ INSTALLATION INSTRUCTIONS
 	; your bot's desired nick
 	nick = xbot
 
-	; if your bot's nick is not registered, you must comment out the line below
+	; if your bot's nick is not registered, you must make this blank
 	password = your-nickserv-password
 
 	; administrator's nick
