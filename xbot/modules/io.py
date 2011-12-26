@@ -75,7 +75,7 @@ def read(bot):
 						bot._login()
 					elif "identified" in bot.remote['message']:
 						bot.init['identified'] = True
-						join_default('freenode')
+						autojoin()
 			
 			if bot.voice:
 				# start scanning messages for certain data
@@ -87,18 +87,13 @@ def read(bot):
 	else:
 		if (bot.remote['mid'].startswith("4") or bot.remote['mid'].startswith("5")) and bot.remote['mid'] != "462":
 			reply(bot.last['requester'], "Message from %s: Error #%s: %s" % (bot.remote['server'], bot.remote['mid'], bot.remote['message']))
-		if not bot.init['joined']:
-			if "freenode" in bot.server:
-				if bot.nick == "woot":
-					bot.init['registered'] = True
-				else:
-					join_default('freenode')
+		if not bot.init['joined'] and not bot.init['registered']:
+			autojoin()
 
-def join_default(server):
-	if server == 'freenode':
-		join(['', '#ualug'])
-		join(['', '##newzealand'])
-		join(['', '#gentoo-nz'])
+def autojoin():
+	channels = Bot.config.get(Bot.server, 'channels').split(",")
+	for channel in channels:
+		join([None, channel.strip()])
 	Bot.init['joined'] = True
 
 def ctcp(type, args):

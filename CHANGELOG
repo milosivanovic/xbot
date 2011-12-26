@@ -1,1 +1,19 @@
-Version 2.0 - first commit
+2011-12-27	Milos Ivanovic	address@removed
+	* version 2.0
+	* initial commit
+
+2011-12-27	Milos Ivanovic	address@removed
+	* version bumped to 2.2
+
+	* minor:
+				- fix a few irregular indentations
+				- other trivial clean-ups and fixes
+	* major:
+		* core
+				- move channels to config file instead of built-in source
+				- use servers:port given in config file instead of built-in source
+
+		* module (quotes)
+				- bump result threshold to max 15
+				- publicly display results found if queried
+				  and 1 < num results <= 15

@@ -1,0 +1,44 @@
+  .,::      .::::::::.      ...   ::::::::::::
+  `;;;,  .,;;  ;;;'';;'  .;;;;;;;.;;;;;;;;''''
+    '[[,,[['   [[[__[[\.,[[     \[[,   [[     
+     Y$$$P     $$""""Y$$$$$,     $$$   $$     
+   oP"``"Yo,  _88o,,od8P"888,_ _,88P   88,    
+,m"       "Mm,""YUMMMP"   "YMMMMMP"    MMM    
+
+INSTALLATION INSTRUCTIONS
+-----------------------------------------------------------------------
+
+1. Copy source to dir
+2. Create configuration file at /etc/xbot/xbot.conf, example below:
+
+	[general]
+	; below entries are optional, see quotes module
+	db_host = localhost
+	db_user = xbot
+	db_pass = your-db-password
+	db_name = xbot_quotes
+
+	; below entry is optional, see wolframalpha module
+	wa_app_id = wolfram-alpha-app-id
+
+
+	[freenode]
+	; servers you would like to try and connect to, in this order
+	; (will fallback to the next server in list upon failure to connect)
+	servers = chat.au.freenode.net:7070, chat.freenode.net:7070
+
+	; your bot's desired nick
+	nick = xbot
+
+	; if your bot's nick is not registered, you must comment out the line below
+	password = your-nickserv-password
+
+	; administrator's nick
+	owner = your-owner-nick
+
+	; comma-separated list of channels to join automatically upon successful
+	; connection to a server
+	channels = #ilovexbot
+
+3. Give 'bot' file execute permissions, and run ./bot
+4. Enjoy!

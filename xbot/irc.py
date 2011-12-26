@@ -12,7 +12,7 @@ class Client(object):
 		self.termop = "\r\n"
 		self.verbose = True
 		self.closing = False
-		self.version = 2.1
+		self.version = 2.2
 		self.env = "Linux (Gentoo)"
 
 	def connect(self, server, port):
@@ -112,7 +112,11 @@ class Parser(Client):
 	def __init__(self, config):
 		super(Parser, self).__init__(config)
 		self.server = config.sections()[1]
-		self.init = {'ident': 0, 'retries': 0, 'ready': False, 'log': True, 'registered': False, 'identified': False, 'joined': False}
+		self.init = {
+			'ident': 0, 'retries': 0, 'ready': False, 'log': True,
+			'registered': True if config.get(self.server, 'password') else False,
+			'identified': False, 'joined': False
+		}
 		self.remote = {}
 		self.inv = {'rooms': {}, 'banned': []}
 		self.last = {}

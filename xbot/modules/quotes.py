@@ -57,7 +57,9 @@ def get_quote(bot, args):
 						type = "keywords"
 						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "'" + gen_kw(search.split()), (channel,))
 						
-				if numrows > 1 and numrows <= 15:
+				if numrows > 0 and numrows <= 15:
+					if numrows > 1:
+						bot._sendq(("PRIVMSG", channel), '%s result%s sent.' % (numrows, '' if numrows == 1 else 's'))
 					return output_quote(bot, cursor, nick)
 				elif numrows > 15:
 					if type == "keywords":
@@ -79,7 +81,7 @@ def output_quote(bot, cursor, nick):
 	
 	for row in cursor.fetchall():
 		if not row[4]: premsg = "%s | <%s> %s"
-		else: premsg = "%s, * %s %s"
+		else: premsg = "%s | * %s %s"
 		output = premsg % (str(datetime.datetime.fromtimestamp(int(row[1]))), row[3], row[5])
 		
 		bot.remote['message'] = output

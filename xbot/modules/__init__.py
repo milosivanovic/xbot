@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import os
 
 for module in os.listdir(os.path.dirname(__file__)):
