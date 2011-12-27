@@ -75,6 +75,7 @@ def read(bot):
 						bot._login()
 					elif "identified" in bot.remote['message']:
 						bot.init['identified'] = True
+						__import__('time').sleep(3)
 						autojoin()
 			
 			if bot.voice:
@@ -103,8 +104,6 @@ def ctcp(type, args):
 		write(("NOTICE", Bot.remote['nick']), "\x01PING %s\x01" % args[0])
 		
 def write(args, message = None):
-	if message:
-		logger.log(Bot, args[1], Bot.nick, message)
 	Bot._sendq(args, message)
 
 def reply(nick, message):

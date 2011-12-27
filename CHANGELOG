@@ -17,3 +17,10 @@
 				- bump result threshold to max 15
 				- publicly display results found if queried
 				  and 1 < num results <= 15
+
+2011-12-27	Milos Ivanovic	address@removed
+	* version bumped to 2.21
+
+	* major:
+				- refactored logging code in core and module
+				  source files

@@ -156,14 +156,12 @@ class Parser(Client):
 			if self.init['ready']:
 				if self.remote['message']:
 					sendee = self.remote['receiver'] if self.remote['receiver'] != self.nick else self.remote['nick']
-					if self.init['joined'] and self.init['log']:
-						self._log(self.remote['mid'], sendee, self.remote['nick'], self.remote['message'])
 					try:
+						if self.init['log'] and self.init['joined'] and self.remote['mid'] == "PRIVMSG":
+							modules.logger.log(self, sendee, self.remote['nick'], self.remote['message'])
 						modules.io.read(self)
 					except:
 						error_message = "Traceback (most recent call last):\n" + '\n'.join(traceback.format_exc().split("\n")[-4:-1])
-						if self.init['log']:
-							self._log(self.remote['mid'], sendee or self.admins[0], self.nick, error_message)
 						self._sendq(("NOTICE", sendee or self.admins[0]), error_message)
 				if self.init['joined']:
 					self._updatedb()
@@ -176,6 +174,11 @@ class Parser(Client):
 			if arg == "PING":
 				self._sendq(['PONG'], message)
 
+	def _sendq(self, left, right = None):
+		if self.init['log'] and self.init['joined'] and left[0] == "PRIVMSG":
+			self._log(left[0], left[1], self.nick, right)
+		Client._sendq(self, left, right)
+	
 	def _init(self):
 		if self.remote['message'] and self.init['ident'] is not True:
 			if self.remote['message'].startswith("*** "):
@@ -225,10 +228,8 @@ class Parser(Client):
 					self.inv['rooms'][room].remove(self.remote['nick'])
 	
 	def _log(self, mid, receiver, nick, message):
-		if mid == "PRIVMSG":
-			if nick != "NickServ":
-				if receiver == self.nick: receiver = nick
-				modules.logger.log(self, receiver, nick, message)
+		if receiver == self.nick: receiver = nick
+		modules.logger.log(self, receiver, nick, message)
 
 	def _reload(self, sendee, args):
 		if len(args) == 1:
@@ -258,5 +259,4 @@ class Parser(Client):
 				response = "Failure: No such modules."
 			del affected, unaffected
 		
-		if self.init['log']: self._log("PRIVMSG", sendee, self.nick, response)
 		self._sendq(("PRIVMSG", sendee), response)
