@@ -45,3 +45,13 @@
 
 		* module (dnstools)
 				- tidy up the way NOTICEs are replied
+
+2011-12-28	Milos Ivanovic	address@removed
+	* version bumped to 2.23
+
+	* major:
+		* core
+				- fixed typo in variable name (introduced in 2.22)
+
+		* module (quotes)
+				- fixed parameters in method (introduced in 2.22)
