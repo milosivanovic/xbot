@@ -66,3 +66,14 @@
 	* minor:
 		*core
 				- removed excess variables
+
+2011-12-29	Milos Ivanovic	address@removed
+	* version bumped to 2.25
+
+	* minor:
+		* core
+				- actually bump-up internal version number
+				- remove excess parameters in _reload
+
+		* module (io)
+				- remove excess parameters in _reload
