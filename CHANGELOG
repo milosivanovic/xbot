@@ -24,3 +24,24 @@
 	* major:
 				- refactored logging code in core and module
 				  source files
+
+2011-12-28	Milos Ivanovic	address@removed
+	* version bumped to 2.22
+
+	* minor:
+		* core
+				- actually bump-up internal version number
+				- method name changes
+	
+		* module (io)
+				- tidy up the way NOTICEs are replied
+
+		* module (quotes)
+				- variable name changes for better understanding
+				- syntax tidy-up
+
+		* module (googleapi)
+				- syntax tidy-up
+
+		* module (dnstools)
+				- tidy up the way NOTICEs are replied

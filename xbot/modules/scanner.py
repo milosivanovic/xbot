@@ -1,8 +1,12 @@
 import re, cleverbot
 import time, random
 
-def scan(bot):
+def scan(bot, message = None):
 	results = []
+	
+	if message:
+		bot.remote['message'] = message
+		
 	message_lowercase = bot.remote['message'].lower()
 	
 	# scan for youtube links and show title

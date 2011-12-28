@@ -53,19 +53,16 @@ def read(bot):
 					# needs work - host cloak only applies to freenode servers
 					if bot.remote['host'] in ['pdpc/supporter/student/milos', 'unaffiliated/milos']:
 						alibrary[command]()
-						bot.last['requester'] = bot.remote['sendee']
+						bot.previous['user'] = bot.remote['sendee']
 					else:
 						if bot.voice:
 							reply(bot.remote['sendee'], "%s: Can't do that, noob." % bot.remote['nick'])
 				elif bot.voice and command in clibrary:
 					try: result = clibrary[command]()
 					except __import__('urllib2').URLError: result = "!%s: response timeout exceeded." % args[0]
-					bot.last['requester'] = bot.remote['sendee']
+					bot.previous['user'] = bot.remote['sendee']
 					if result:
-						if not result.startswith("^NOTICE"):
-							reply(bot.remote['sendee'], result)
-						else:
-							write(("NOTICE", bot.remote['nick']), result[8:])
+						reply(bot.remote['sendee'], result)
 		elif (bot.remote['message'].startswith("\x01") and not bot.remote['message'].startswith("\x01ACTION")) and bot.remote['message'].endswith("\x01"):
 			ctcp(bot.remote['message'][1:-1].split()[0], bot.remote['message'][1:-1].split()[1:])
 		else:
@@ -87,7 +84,7 @@ def read(bot):
 
 	else:
 		if (bot.remote['mid'].startswith("4") or bot.remote['mid'].startswith("5")) and bot.remote['mid'] != "462":
-			reply(bot.last['requester'], "Message from %s: Error #%s: %s" % (bot.remote['server'], bot.remote['mid'], bot.remote['message']))
+			reply(bot.previous['user'], "Message from %s: Error #%s: %s" % (bot.remote['server'], bot.remote['mid'], bot.remote['message']))
 		if not bot.init['joined'] and not bot.init['registered']:
 			autojoin()
 

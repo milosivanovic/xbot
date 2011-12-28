@@ -23,8 +23,7 @@ def search(bot, args):
 			url = jsondata['responseData']['results'][0]['unescapedUrl']
 			if url.startswith("http://www.youtube.com/"):
 				import scanner
-				bot.remote['message'] = url
-				title = "\n" + scanner.scan(bot)
+				title = "\n" + scanner.scan(bot, url)
 			if country:
 				return "From %s only: %s%s" % (country, url, title)
 			else:

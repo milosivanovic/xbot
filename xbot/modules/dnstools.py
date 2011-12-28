@@ -55,8 +55,7 @@ def wiki(bot, args):
 	if len(args) > 0:
 		result = lookitup('%s.wp.dg.cx' % '_'.join(args[1:]), 'TXT')
 		if result:
-			result = str(result[0])
-			return "^NOTICE %s" % ''.join(result.split('"'))
+			return bot._sendq(("NOTICE", bot.remote['nick']), ''.join(str(result[0]).split('"')))
 		else:
 			return "No such article found."
 		

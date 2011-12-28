@@ -60,7 +60,7 @@ def get_quote(bot, args):
 				if numrows > 0 and numrows <= 15:
 					if numrows > 1:
 						bot._sendq(("PRIVMSG", channel), '%s result%s sent.' % (numrows, '' if numrows == 1 else 's'))
-					return output_quote(bot, cursor, nick)
+					return output_quote(bot, cursor)
 				elif numrows > 15:
 					if type == "keywords":
 						return "%d quotes found." % numrows
@@ -76,18 +76,19 @@ def get_quote(bot, args):
 	else:
 		return "Usage: !%s <nick|*> [<keywords|/regexp/>]" % args[0]
 
-def output_quote(bot, cursor, nick):
+def output_quote(bot, cursor):
 	import scanner
 	
 	for row in cursor.fetchall():
-		if not row[4]: premsg = "%s | <%s> %s"
-		else: premsg = "%s | * %s %s"
-		output = premsg % (str(datetime.datetime.fromtimestamp(int(row[1]))), row[3], row[5])
+		if not row[4]:
+			prepend = "%s | <%s> %s"
+		else:
+			prepend = "%s | * %s %s"
 		
-		bot.remote['message'] = output
-		result = scanner.scan(bot) or ''
+		output = prepend % (str(datetime.datetime.fromtimestamp(int(row[1]))), row[3], row[5])
+		result = scanner.scan(bot, output) or ''
 		
 		if cursor.rowcount > 1:
-			bot._sendq(("NOTICE", nick), '\n'.join([output, result]))
+			bot._sendq(("NOTICE", bot.remote['nick']), '\n'.join([output, result]))
 		else:
 			return '\n'.join([output, result])

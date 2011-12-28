@@ -12,8 +12,8 @@ class Client(object):
 		self.termop = "\r\n"
 		self.verbose = True
 		self.closing = False
-		self.version = 2.2
-		self.env = "Linux (Gentoo)"
+		self.version = 2.21
+		self.env = sys.platform
 
 	def connect(self, server, port):
 		socket.setdefaulttimeout(300)
@@ -108,7 +108,6 @@ class Client(object):
 			print "%s %s %s" % (log, pad, line.encode('string_escape').replace("\\'", "'").replace("\\\\", "\\"))
 
 class Parser(Client):
-
 	def __init__(self, config):
 		super(Parser, self).__init__(config)
 		self.server = config.sections()[1]
@@ -119,7 +118,7 @@ class Parser(Client):
 		}
 		self.remote = {}
 		self.inv = {'rooms': {}, 'banned': []}
-		self.last = {}
+		self.previous = {}
 		self.voice = True
 		self.name = config.get(self.server, 'nick')
 		self.admins = config.get(self.server, 'owner')
@@ -164,7 +163,7 @@ class Parser(Client):
 						error_message = "Traceback (most recent call last):\n" + '\n'.join(traceback.format_exc().split("\n")[-4:-1])
 						self._sendq(("NOTICE", sendee or self.admins[0]), error_message)
 				if self.init['joined']:
-					self._updatedb()
+					self._updateNicks()
 						
 		else:
 			arg	= line.split(" :")[0]
@@ -176,7 +175,8 @@ class Parser(Client):
 
 	def _sendq(self, left, right = None):
 		if self.init['log'] and self.init['joined'] and left[0] == "PRIVMSG":
-			self._log(left[0], left[1], self.nick, right)
+			if receiver == self.nick: receiver = nick
+			modules.logger.log(self, left[1], self.nick, right)
 		Client._sendq(self, left, right)
 	
 	def _init(self):
@@ -200,7 +200,7 @@ class Parser(Client):
 	def _login(self):
 		self._sendq(("PRIVMSG", "NickServ"), "IDENTIFY %s" % self.config.get(self.server, 'password'))
 	
-	def _updatedb(self):
+	def _updateNicks(self):
 		if self.remote['mid'] == "353":
 			for user in self.remote['message'].split():
 				self.inv['rooms'][self.remote['misc'][1]].append(user.lstrip("~&@%+"))
@@ -226,10 +226,6 @@ class Parser(Client):
 			for room in self.inv['rooms']:
 				if self.remote['nick'] in self.inv['rooms'][room]:
 					self.inv['rooms'][room].remove(self.remote['nick'])
-	
-	def _log(self, mid, receiver, nick, message):
-		if receiver == self.nick: receiver = nick
-		modules.logger.log(self, receiver, nick, message)
 
 	def _reload(self, sendee, args):
 		if len(args) == 1:
