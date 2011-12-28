@@ -55,3 +55,14 @@
 
 		* module (quotes)
 				- fixed parameters in method (introduced in 2.22)
+
+2011-12-28	Milos Ivanovic	address@removed
+	* version bumped to 2.24
+
+	* major:
+		* module (quotes)
+				- fixed parameters in method again (introduced in 2.22)
+
+	* minor:
+		*core
+				- removed excess variables
