@@ -77,3 +77,10 @@
 
 		* module (io)
 				- remove excess parameters in _reload
+
+2011-12-29	Milos Ivanovic	address@removed
+	* version bumped to 2.26
+
+	* major:
+		* core:
+				- actually use the new 2.25 source code

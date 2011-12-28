@@ -30,13 +30,13 @@ def get_quote(bot, args):
 				if args[1] != "*":
 					numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s ORDER BY rand() LIMIT 1", (channel, args[1]))
 					if numrows:
-						return output_quote(bot, cursor, nick)
+						return output_quote(bot, cursor)
 					elif numrows is not None:
 						return "No quotes from %s found." % args[1]
 				else:
 					numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "' ORDER BY rand() LIMIT 1", (channel,))
 					if numrows:
-						return output_quote(bot, cursor, nick)
+						return output_quote(bot, cursor)
 					elif numrows is not None:
 						return "No quotes in database yet."
 						

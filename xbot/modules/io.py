@@ -9,12 +9,11 @@ def read(bot):
 	global Bot
 	Bot = bot
 	if bot.remote['nick'] and bot.remote['nick'] != bot.nick:
-		bot.remote['sendee'] = bot.remote['receiver'] if bot.remote['receiver'] != bot.nick else bot.remote['nick']
 		if bot.remote['message'].startswith("!"):
 			args = bot.remote['message'][1:].rstrip().split(" ")
 			command = args[0].lower()
 			alibrary = {
-				'reload':		lambda: bot._reload(bot.remote['sendee'], args),
+				'reload':		lambda: bot._reload(args),
 				'voice':		lambda: voice(args),
 				'nick':			lambda: cnick(args),
 				'release':		lambda: release(args),
@@ -44,7 +43,7 @@ def read(bot):
 				'choose':		lambda: fun.choose(bot, args),
 				'8ball':		lambda: fun.m8b(bot, args),
 				'ghetto':		lambda: fun.ghetto(bot, args),
-				'sortinghat':	lambda: fun.sorting_hat(bot, args),
+				'sortinghat': 	lambda: fun.sorting_hat(bot, args),
 				'lotto':		lambda: fun.lotto(bot, args),
 				'quotes':		lambda: quotes.get_quote(bot, args)
 			}

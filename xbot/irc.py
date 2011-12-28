@@ -12,7 +12,7 @@ class Client(object):
 		self.termop = "\r\n"
 		self.verbose = True
 		self.closing = False
-		self.version = 2.21
+		self.version = 2.25
 		self.env = sys.platform
 
 	def connect(self, server, port):
@@ -154,14 +154,14 @@ class Parser(Client):
 				
 			if self.init['ready']:
 				if self.remote['message']:
-					sendee = self.remote['receiver'] if self.remote['receiver'] != self.nick else self.remote['nick']
+					self.remote['sendee'] = self.remote['receiver'] if self.remote['receiver'] != self.nick else self.remote['nick']
 					try:
 						if self.init['log'] and self.init['joined'] and self.remote['mid'] == "PRIVMSG":
-							modules.logger.log(self, sendee, self.remote['nick'], self.remote['message'])
+							modules.logger.log(self, self.remote['sendee'], self.remote['nick'], self.remote['message'])
 						modules.io.read(self)
 					except:
 						error_message = "Traceback (most recent call last):\n" + '\n'.join(traceback.format_exc().split("\n")[-4:-1])
-						self._sendq(("NOTICE", sendee or self.admins[0]), error_message)
+						self._sendq(("NOTICE", self.remote['sendee'] or self.admins[0]), error_message)
 				if self.init['joined']:
 					self._updateNicks()
 						
@@ -175,7 +175,7 @@ class Parser(Client):
 
 	def _sendq(self, left, right = None):
 		if self.init['log'] and self.init['joined'] and left[0] == "PRIVMSG":
-			if receiver == self.nick: receiver = nick
+			if self.remote['receiver'] == self.nick: self.remote['receiver'] = nick
 			modules.logger.log(self, left[1], self.nick, right)
 		Client._sendq(self, left, right)
 	
@@ -191,10 +191,9 @@ class Parser(Client):
 				self.init['ident'] = True
 
 	def _ident(self):
-		name = self.name + "_" * self.init['retries']
-		self._sendq(("NICK", name))
-		self._sendq(("USER", name, name, name), name)
-		self.nick = name
+		self.nick = self.name + "_" * self.init['retries']
+		self._sendq(("NICK", self.nick))
+		self._sendq(("USER", self.nick, self.nick, self.nick), self.nick)
 		self.init['retries'] += 1
 	
 	def _login(self):
@@ -227,7 +226,7 @@ class Parser(Client):
 				if self.remote['nick'] in self.inv['rooms'][room]:
 					self.inv['rooms'][room].remove(self.remote['nick'])
 
-	def _reload(self, sendee, args):
+	def _reload(self, args):
 		if len(args) == 1:
 			reload(modules)
 			response = "Success: Reloaded all submodules."
@@ -255,4 +254,4 @@ class Parser(Client):
 				response = "Failure: No such modules."
 			del affected, unaffected
 		
-		self._sendq(("PRIVMSG", sendee), response)
+		self._sendq(("PRIVMSG", self.remote['sendee']), response)
