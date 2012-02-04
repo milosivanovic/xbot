@@ -15,7 +15,11 @@ def log(bot, channel, nick, message):
 		
 	file.close()
 	
-	db = MySQLdb.connect(host=bot.config.get('general', 'db_host'), user=bot.config.get('general', 'db_user'), passwd=bot.config.get('general', 'db_pass'), db=bot.config.get('general', 'db_name'))
+	try:
+		db = MySQLdb.connect(host=bot.config.get('general', 'db_host'), user=bot.config.get('general', 'db_user'), passwd=bot.config.get('general', 'db_pass'), db=bot.config.get('general', 'db_name'))
+	except MySQLdb.OperationalError:
+		return
+	
 	cursor = db.cursor()
 	if not message.startswith("!quote"):
 		if action: message = message[8:-1]

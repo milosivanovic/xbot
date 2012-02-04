@@ -12,7 +12,7 @@ class Client(object):
 		self.termop = "\r\n"
 		self.verbose = True
 		self.closing = False
-		self.version = 2.25
+		self.version = 2.3
 		self.env = sys.platform
 
 	def connect(self, server, port):
@@ -116,8 +116,11 @@ class Parser(Client):
 			'registered': True if config.get(self.server, 'password') else False,
 			'identified': False, 'joined': False
 		}
+		self.inv = {
+			'rooms': {},
+			'banned': []
+		}
 		self.remote = {}
-		self.inv = {'rooms': {}, 'banned': []}
 		self.previous = {}
 		self.voice = True
 		self.name = config.get(self.server, 'nick')
@@ -175,7 +178,7 @@ class Parser(Client):
 
 	def _sendq(self, left, right = None):
 		if self.init['log'] and self.init['joined'] and left[0] == "PRIVMSG":
-			if self.remote['receiver'] == self.nick: self.remote['receiver'] = nick
+			if self.remote['receiver'] == self.nick: self.remote['receiver'] = self.remote['nick']
 			modules.logger.log(self, left[1], self.nick, right)
 		Client._sendq(self, left, right)
 	
@@ -200,31 +203,56 @@ class Parser(Client):
 		self._sendq(("PRIVMSG", "NickServ"), "IDENTIFY %s" % self.config.get(self.server, 'password'))
 	
 	def _updateNicks(self):
-		if self.remote['mid'] == "353":
-			for user in self.remote['message'].split():
-				self.inv['rooms'][self.remote['misc'][1]].append(user.lstrip("~&@%+"))
-		if self.remote['mid'] == "JOIN" and self.remote['nick'] != self.nick:
+		if self.remote['mid'] == "JOIN":
+			if self.remote['nick'] == self.nick:
+				self.inv['rooms'][self.remote['receiver']] = {}
+			else:
 				if self.remote['receiver']:
-					self.inv['rooms'][self.remote['receiver']].append(self.remote['nick'])
+					self.inv['rooms'][self.remote['receiver']][self.remote['nick']] = {}
 				else:
-					self.inv['rooms'][self.remote['message']].append(self.remote['nick'])
-		elif self.remote['mid'] == "PART" and self.remote['nick'] != self.nick:
-				self.inv['rooms'][self.remote['receiver']].remove(self.remote['nick'])
+					self.inv['rooms'][self.remote['message']][self.remote['nick']] = {}
+		elif self.remote['mid'] == "353":
+			for user in self.remote['message'].split():
+				self.inv['rooms'][self.remote['misc'][1]][user.lstrip("~.@%+")] = {}
+				if __import__('re').search('^[~\.@%\+]', user):
+					if user[0] in ['~', '.']:
+						mode = 'q'
+					elif user[0] == '@':
+						mode = 'o'
+					elif user[0] == '%':
+						mode = 'h'
+					elif user[0] == '+':
+						mode = 'v'
+					self.inv['rooms'][self.remote['misc'][1]][user[1:]]['mode'] = mode or None
+				else:
+					self.inv['rooms'][self.remote['misc'][1]][user]['mode'] = None
+		elif self.remote['mid'] == "PART":
+				if self.remote['nick'] == self.nick:
+					del self.inv['rooms'][self.remote['receiver']]
+				else:
+					del self.inv['rooms'][self.remote['receiver']][self.remote['nick']]
 		elif self.remote['mid'] == "KICK":
 			if self.remote['misc'][0].lower() != self.nick.lower():
-				self.inv['rooms'][self.remote['receiver']].remove(self.remote['misc'][0])
+				del self.inv['rooms'][self.remote['receiver']][self.remote['misc'][0]]
 			else:
-				del self.inv['rooms'][self.remove['receiver']]
+				del self.inv['rooms'][self.remote['receiver']]
 		elif self.remote['mid'] == "NICK":
 			for room in self.inv['rooms']:
 				if self.remote['nick'] in self.inv['rooms'][room]:
-					self.inv['rooms'][room][self.inv['rooms'][room].index(self.remote['nick'])] = self.remote['message']
+					self.inv['rooms'][room][self.remote['message']] = self.inv['rooms'][room][self.remote['nick']]
+					del self.inv['rooms'][room][self.remote['nick']]
 			if self.remote['nick'].lower() in self.inv['banned']:
 				self.inv['banned'][self.inv['banned'].index(self.remote['nick'].lower())] = self.remote['message'].lower()
 		elif self.remote['mid'] == "QUIT":
 			for room in self.inv['rooms']:
 				if self.remote['nick'] in self.inv['rooms'][room]:
-					self.inv['rooms'][room].remove(self.remote['nick'])
+					del self.inv['rooms'][room][self.remote['nick']]
+		elif self.remote['mid'] == "MODE":
+			if len(self.remote['misc']) == 2:
+				if self.remote['misc'][0].startswith("+") and self.remote['misc'][0][1] in ['o', 'h', 'v']:
+					self.inv['rooms'][self.remote['receiver']][self.remote['misc'][1]]['mode'] = self.remote['misc'][0][1]
+				elif self.remote['misc'][0].startswith("-") and self.remote['misc'][0][1] in ['o', 'h', 'v']:
+					self.inv['rooms'][self.remote['receiver']][self.remote['misc'][1]]['mode'] = None
 
 	def _reload(self, args):
 		if len(args) == 1:

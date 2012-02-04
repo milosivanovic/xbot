@@ -3,7 +3,7 @@ import logger, scanner
 
 # user modules
 import wolframalpha, googleapi, dnstools, tell
-import fun, man, quotes
+import fun, man, quotes, lotto
 
 def read(bot):
 	global Bot
@@ -23,8 +23,7 @@ def read(bot):
 				'kick':			lambda: kick(args),
 				'mode':			lambda: mode(args),
 				'perms':		lambda: perms(args),
-				'raw':			lambda: raw(args),
-				'list':			lambda: list(nick)
+				'raw':			lambda: raw(args)
 			}
 			clibrary = {
 				'topic':		lambda: topic(bot, args),
@@ -44,7 +43,7 @@ def read(bot):
 				'8ball':		lambda: fun.m8b(bot, args),
 				'ghetto':		lambda: fun.ghetto(bot, args),
 				'sortinghat': 	lambda: fun.sorting_hat(bot, args),
-				'lotto':		lambda: fun.lotto(bot, args),
+				'lotto':		lambda: lotto.get_results(bot, args),
 				'quotes':		lambda: quotes.get_quote(bot, args)
 			}
 			if bot.remote['nick'].lower() not in bot.inv['banned']:
@@ -139,7 +138,6 @@ def join(args):
 	if len(args) == 2:
 		if args[1] not in Bot.inv['rooms']:
 			write(("JOIN", args[1]))
-			Bot.inv['rooms'][args[1]] = []
 		else:
 			write(("PRIVMSG", Bot.remote['sendee']), "I'm already in that channel, noob.")
 
@@ -148,10 +146,9 @@ def part(args):
 		channel = Bot.remote['sendee']
 	elif len(args) == 2:
 		channel = args[1]
-	try:
+	if channel in Bot.inv['rooms']:
 		write(("PART", channel))
-		del Bot.inv['rooms'][channel]
-	except KeyError:
+	else:
 		write(("PRIVMSG", Bot.remote['sendee']), "I'm not in that channel, noob.")
 	
 def kick(args):
@@ -159,7 +156,10 @@ def kick(args):
 		if args[1].lower() == Bot.nick.lower():
 			reply(Bot.remote['sendee'], ":(")
 		else:
-			write(("KICK", Bot.remote['sendee'], args[1]), ' '.join(args[2:]))
+			if Bot.inv['rooms'][Bot.remote['receiver']][Bot.nick]['mode'] == "o":
+				write(("KICK", Bot.remote['sendee'], args[1]), ' '.join(args[2:]))
+			else:
+				write(("PRIVMSG", Bot.remote['sendee']), "No ops lol.")
 
 def topic(bot, args):
 	if len(args) >= 2:

@@ -66,7 +66,7 @@ def get_quote(bot, args):
 						return "%d quotes found." % numrows
 					elif type == "regexp":
 						return "%d quotes matched." % numrows
-				else:
+				elif numrows is not None:
 					if type == "keywords":
 						return "No quotes with keywords |%s| found." % search
 					elif type == "regexp":

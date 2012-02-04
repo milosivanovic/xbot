@@ -1,5 +1,6 @@
-import re, cleverbot
-import time, random
+import re
+import time
+import random
 
 def scan(bot, message = None):
 	results = []
@@ -22,8 +23,8 @@ def scan(bot, message = None):
 		results.append("%s: %s" % (nick, re.compile('cleverbot', re.IGNORECASE).sub(bot.nick, bot.inv['cleverbot'][channel].query(query))))"""
 		bot._sendq(("NOTICE", bot.remote['nick']), "This feature has been disabled.")
 	
-	# per 20% chance, count uppercase and act shocked
-	if len(bot.remote['message']) > 2 and random.random() > 0.8:
+	# per 10% chance, count uppercase and act shocked
+	if len(bot.remote['message']) > 2 and random.random() > 0.9:
 		if count_upper(bot.remote['message']) > 80:
 			time.sleep(4)
 			results.append(random.choice([':' + 'O' * random.randint(1, 10), 'O' * random.randint(1, 10) + ':']))

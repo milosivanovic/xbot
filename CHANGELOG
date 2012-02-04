@@ -84,3 +84,16 @@
 	* major:
 		* core:
 				- actually use the new 2.25 source code
+
+2012-05-02	Milos Ivanovic	address@removed
+	* version bumped to 2.3
+
+	* minor:
+		* core
+				- keep track of who has operator status
+
+		* module (logger)
+				- ignore db connect issues
+
+		* module (wolframalpha)
+				- accept more titles
