@@ -1,6 +1,6 @@
 import os
 import time, datetime
-import MySQLdb
+import botdb
 
 def log(bot, channel, nick, message):
 	date = datetime.datetime.now().strftime("%b %d %Y %H:%M:%S")
@@ -10,15 +10,13 @@ def log(bot, channel, nick, message):
 		action = 1
 	else:
 		for line in message.split("\n"):
-			file.write("%s <%s> %s\r\n" % (date, nick, line))
+			if line:
+				file.write("%s <%s> %s\r\n" % (date, nick, line))
 		action = 0
 		
 	file.close()
 	
-	try:
-		db = MySQLdb.connect(host=bot.config.get('general', 'db_host'), user=bot.config.get('general', 'db_user'), passwd=bot.config.get('general', 'db_pass'), db=bot.config.get('general', 'db_name'))
-	except MySQLdb.OperationalError:
-		return
+	db = botdb.BotDB(bot).connect()
 	
 	cursor = db.cursor()
 	if not message.startswith("!quote"):

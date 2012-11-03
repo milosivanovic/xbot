@@ -1,10 +1,10 @@
 import datetime
-import MySQLdb
+import botdb
 import re
 
 def get_quote(bot, args):
 
-	db = MySQLdb.connect(host=bot.config.get('general', 'db_host'), user=bot.config.get('general', 'db_user'), passwd=bot.config.get('general', 'db_pass'), db=bot.config.get('general', 'db_name'))
+	db = botdb.BotDB(bot).connect()
 	cursor = db.cursor()
 
 	def sql(query, vars):
@@ -45,17 +45,17 @@ def get_quote(bot, args):
 				if args[1] != "*":
 					if search.startswith("/") and search.endswith("/"):
 						type = "regexp"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s AND message REGEXP %s", (channel, args[1], search[1:-1]))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s AND message REGEXP %s ORDER BY rand() LIMIT 1", (channel, args[1], search[1:-1]))
 					else:
 						type = "keywords"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s" + gen_kw(search.split()), (channel, args[1]))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s " + gen_kw(search.split()) + " ORDER BY rand() LIMIT 1", (channel, args[1]))
 				else:
 					if search.startswith("/") and search.endswith("/"):
 						type = "regexp"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "' AND message REGEXP %s", (channel, search[1:-1]))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "' AND message REGEXP %s ORDER BY rand() LIMIT 1", (channel, search[1:-1]))
 					else:
 						type = "keywords"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "'" + gen_kw(search.split()), (channel,))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "'" + gen_kw(search.split()) + " ORDER BY rand() LIMIT 1", (channel,))
 						
 				if numrows > 0 and numrows <= 15:
 					if numrows > 1:

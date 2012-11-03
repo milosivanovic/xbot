@@ -1,6 +1,6 @@
 import sys, os
 import socket
-import datetime
+import time, datetime
 import traceback
 import modules
 
@@ -12,7 +12,7 @@ class Client(object):
 		self.termop = "\r\n"
 		self.verbose = True
 		self.closing = False
-		self.version = 2.3
+		self.version = 2.4
 		self.env = sys.platform
 
 	def connect(self, server, port):
@@ -51,7 +51,7 @@ class Client(object):
 	def _sendq(self, left, right = None):
 		if right:
 			limit = 445
-			for line in right.split("\n"):
+			for line in right.splitlines():
 				if line:
 					lines = [line[i:i+limit] for i in range(0, len(line), limit)]
 					for n in range(len(lines)):
@@ -67,10 +67,10 @@ class Client(object):
 			if i == 0:
 				buffer = ''.join(self.sendq[:burst])
 				del self.sendq[:burst]
-			elif len(self.sendq) > 0:
+			elif lines > 0:
 				buffer = ''.join(self.sendq[:delay])
 				del self.sendq[:delay]
-				__import__('time').sleep(delay)
+				time.sleep(delay)
 			if self.verbose:
 				self._log('out', buffer)
 			self.sock.write(buffer)
@@ -110,10 +110,10 @@ class Client(object):
 class Parser(Client):
 	def __init__(self, config):
 		super(Parser, self).__init__(config)
-		self.server = config.sections()[1]
+		self.network = config.active_network
 		self.init = {
 			'ident': 0, 'retries': 0, 'ready': False, 'log': True,
-			'registered': True if config.get(self.server, 'password') else False,
+			'registered': True if config.get(self.network, 'password') else False,
 			'identified': False, 'joined': False
 		}
 		self.inv = {
@@ -123,10 +123,18 @@ class Parser(Client):
 		self.remote = {}
 		self.previous = {}
 		self.voice = True
-		self.name = config.get(self.server, 'nick')
-		self.admins = config.get(self.server, 'owner')
+		self.name = config.get(self.network, 'nick')
+		self.admin = config.get(self.network, 'admin')
 
 	def interpret(self, line):
+		self.remote['server'] = None
+		self.remote['nick'] = None
+		self.remote['user'] = None
+		self.remote['host'] = None
+		self.remote['misc'] = None
+		self.remote['message'] = None
+		self.remote['receiver'] = None
+		
 		if line.startswith(":"):
 			_args = ''.join(line.split(":", 1)[1]).split(" :", 1)
 			args = _args[0].split()
@@ -134,22 +142,18 @@ class Parser(Client):
 			
 			if "@" in args[0]:
 				_temp = args[0].split("@")
-				self.remote['server'] = None
 				self.remote['nick'] = _temp[0].split("!")[0]
 				self.remote['user'] = _temp[0].split("!")[1]
 				self.remote['host'] = _temp[1]
 			else:
 				self.remote['server'] = args[0]
-				self.remote['nick'] = None
-				self.remote['user'] = None
-				self.remote['host'] = None
 				
-			try: 	self.remote['misc'] = args[3:]
-			except: self.remote['misc'] = None
-			try:	self.remote['message'] = _args[1]
-			except: self.remote['message'] = None
-			try:	self.remote['receiver'] = args[2]
-			except: self.remote['receiver'] = None
+			try: self.remote['misc'] = args[3:]
+			except IndexError: pass
+			try: self.remote['message'] = _args[1]
+			except IndexError: pass
+			try: self.remote['receiver'] = args[2]
+			except IndexError: pass
 			self._init()
 
 			if self.init['ident'] and self.remote['mid'] in ['376', '422']:
@@ -164,10 +168,9 @@ class Parser(Client):
 						modules.io.read(self)
 					except:
 						error_message = "Traceback (most recent call last):\n" + '\n'.join(traceback.format_exc().split("\n")[-4:-1])
-						self._sendq(("NOTICE", self.remote['sendee'] or self.admins[0]), error_message)
+						self._sendq(("NOTICE", self.remote['sendee'] or self.admin), error_message)
 				if self.init['joined']:
-					self._updateNicks()
-						
+					self._updateNicks()				
 		else:
 			arg	= line.split(" :")[0]
 			message = line.split(" :", 1)[1]
@@ -179,14 +182,15 @@ class Parser(Client):
 	def _sendq(self, left, right = None):
 		if self.init['log'] and self.init['joined'] and left[0] == "PRIVMSG":
 			if self.remote['receiver'] == self.nick: self.remote['receiver'] = self.remote['nick']
+			if type(right) != str: raise AssertionError("send queue must be <type 'str'> but was found as %s" % type(right))
 			modules.logger.log(self, left[1], self.nick, right)
 		Client._sendq(self, left, right)
 	
 	def _init(self):
 		if self.remote['message'] and self.init['ident'] is not True:
-			if self.remote['message'].startswith("*** "):
+			if self.remote['message']:
 				self.init['ident'] += 1
-		if self.init['ident'] == 4:
+		if self.init['ident'] > 1:
 			while not self.init['retries'] or self.remote['mid'] in ['433', '437']:
 				self._ident()
 				break
@@ -200,7 +204,7 @@ class Parser(Client):
 		self.init['retries'] += 1
 	
 	def _login(self):
-		self._sendq(("PRIVMSG", "NickServ"), "IDENTIFY %s" % self.config.get(self.server, 'password'))
+		self._sendq(("PRIVMSG", "NickServ"), "IDENTIFY %s" % self.config.get(self.network, 'password'))
 	
 	def _updateNicks(self):
 		if self.remote['mid'] == "JOIN":

@@ -6,25 +6,17 @@
 ,m"       "Mm,""YUMMMP"   "YMMMMMP"    MMM    
 
 INSTALLATION INSTRUCTIONS
------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 1. Copy source to dir
 2. Create configuration file at /etc/xbot/xbot.conf, example below:
 
-	[general]
-	; below entries are optional, see quotes module
-	db_host = localhost
-	db_user = xbot
-	db_pass = your-db-password
-	db_name = xbot_quotes
+	; network configs must begin with 'network:' in their section name
 
-	; below entry is optional, see wolframalpha module
-	wa_app_id = wolfram-alpha-app-id
-
-
-	[freenode]
+	[network: freenode]
 	; servers you would like to try and connect to, in this order
 	; (will fallback to the next server in list upon failure to connect)
+	; only SSL servers are currently supported
 	servers = chat.au.freenode.net:7070, chat.freenode.net:7070
 
 	; your bot's desired nick
@@ -34,11 +26,33 @@ INSTALLATION INSTRUCTIONS
 	password = your-nickserv-password
 
 	; administrator's nick
-	owner = your-owner-nick
+	; used solely for sending emergency data if it is not known
+	; where else to send it
+	admin = your-owner-nick
 
-	; comma-separated list of channels to join automatically upon successful
-	; connection to a server
+	; administrator's hostnames
+	; users with these hostnames will be able to perform admin actions
+	admin_hostnames = unaffiliated/xbotlover
+
+	; comma-separated list of channels to join automatically upon
+	; successful connection to a server
 	channels = #ilovexbot
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	; module configs must begin with 'module:' in their section name
+
+    [module: botdb]
+    ; below entries required for logger and quotes modules
+	; see DATABASE file for table structure
+    db_host = localhost
+    db_user = xbot
+    db_pass = your-db-password
+    db_name = xbot_quotes
+
+	[module: wolframalpha]
+    ; below entry required for wolframalpha module
+    wa_app_id = wolfram-alpha-app-id
 
 3. Give 'bot' file execute permissions, and run ./bot
 4. Enjoy!

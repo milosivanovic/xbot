@@ -1,9 +1,9 @@
 import datetime
-import logger, scanner
+import scanner
 
 # user modules
 import wolframalpha, googleapi, dnstools, tell
-import fun, man, quotes, lotto
+import fun, man, quotes, lotto, eval, imdb, usage, maxx, js
 
 def read(bot):
 	global Bot
@@ -23,6 +23,7 @@ def read(bot):
 				'kick':			lambda: kick(args),
 				'mode':			lambda: mode(args),
 				'perms':		lambda: perms(args),
+				'eval':			lambda: reply(bot.remote['sendee'], eval.parse(bot, args)),
 				'raw':			lambda: raw(args)
 			}
 			clibrary = {
@@ -37,19 +38,22 @@ def read(bot):
 				'tell':			lambda: tell.answer(bot, args),
 				'twss':			lambda: fun.twss(bot, args),
 				'cookie':		lambda: fun.cookie(bot, args),
-				'spun':			lambda: fun.spin(bot, args),
+				'spin':			lambda: fun.spin(bot, args),
 				'man':			lambda: man.man(bot, args),
 				'choose':		lambda: fun.choose(bot, args),
 				'8ball':		lambda: fun.m8b(bot, args),
 				'ghetto':		lambda: fun.ghetto(bot, args),
 				'sortinghat': 	lambda: fun.sorting_hat(bot, args),
 				'lotto':		lambda: lotto.get_results(bot, args),
-				'quotes':		lambda: quotes.get_quote(bot, args)
+				'quotes':		lambda: quotes.get_quote(bot, args),
+				'imdb':			lambda: imdb.info(bot, args),
+				'usage':		lambda: usage.usage(bot, args),
+				'maxx':			lambda: maxx.times(bot, args),
+				'js':			lambda: js.execute(bot, args)
 			}
 			if bot.remote['nick'].lower() not in bot.inv['banned']:
 				if command in alibrary:
-					# needs work - host cloak only applies to freenode servers
-					if bot.remote['host'] in ['pdpc/supporter/student/milos', 'unaffiliated/milos']:
+					if bot.remote['host'] in [host.strip() for host in bot.config.get(bot.network, 'admin_hostnames').split(',')]:
 						alibrary[command]()
 						bot.previous['user'] = bot.remote['sendee']
 					else:
@@ -57,15 +61,19 @@ def read(bot):
 							reply(bot.remote['sendee'], "%s: Can't do that, noob." % bot.remote['nick'])
 				elif bot.voice and command in clibrary:
 					try: result = clibrary[command]()
-					except __import__('urllib2').URLError: result = "!%s: response timeout exceeded." % args[0]
+					except __import__('urllib2').HTTPError: result = "!%s: derping the herp" % args[0]
+					except (__import__('urllib2').URLError, __import__('socket').timeout): result = "!%s: response timeout exceeded." % args[0]
 					bot.previous['user'] = bot.remote['sendee']
 					if result:
 						reply(bot.remote['sendee'], result)
-		elif (bot.remote['message'].startswith("\x01") and not bot.remote['message'].startswith("\x01ACTION")) and bot.remote['message'].endswith("\x01"):
-			ctcp(bot.remote['message'][1:-1].split()[0], bot.remote['message'][1:-1].split()[1:])
+		elif bot.remote['message'].startswith("\x01") and bot.remote['message'].endswith("\x01"):
+			type = bot.remote['message'][1:-1].split()[0]
+			args = bot.remote['message'][1:-1].split()[1:]
+			if type != "ACTION":
+				ctcp(type, args)
 		else:
 			if bot.init['registered'] and not bot.init['identified']:
-				if bot.remote['host'] == "services." and bot.remote['nick'] == "NickServ":
+				if bot.remote['nick'] == "NickServ":
 					if "registered" in bot.remote['message']:
 						bot._login()
 					elif "identified" in bot.remote['message']:
@@ -76,7 +84,7 @@ def read(bot):
 			if bot.voice:
 				# start scanning messages for certain data
 				try: response = scanner.scan(bot)
-				except __import__('urllib2').URLError: response = "fetch: response timeout exceeded."
+				except (__import__('urllib2').URLError, __import__('socket').timeout): response = "fetch: response timeout exceeded."
 				if response:
 					reply(bot.remote['sendee'], response)
 
@@ -87,7 +95,7 @@ def read(bot):
 			autojoin()
 
 def autojoin():
-	channels = Bot.config.get(Bot.server, 'channels').split(",")
+	channels = Bot.config.get(Bot.network, 'channels').split(",")
 	for channel in channels:
 		join([None, channel.strip()])
 	Bot.init['joined'] = True
@@ -105,10 +113,13 @@ def reply(nick, message):
 	write(("PRIVMSG", nick), message)
 
 def time(bot, args):
-	now = datetime.datetime.now()
-	hour = int(now.strftime("%H"))
-	bedtime = " (bedtime)" if hour >= 0 and hour <= 7 else ''
-	return "It is now %s%s on %s NZT." % (now.strftime("%I:%M%p"), bedtime, now.strftime("%A, %d %B %Y"))
+	if len(args) == 1:
+		now = datetime.datetime.now()
+		hour = int(now.strftime("%H"))
+		bedtime = " (bedtime)" if hour >= 0 and hour <= 7 else ''
+		return "It is now %s%s on %s NZT." % (now.strftime("%I:%M%p"), bedtime, now.strftime("%A, %d %B %Y"))
+	else:
+		return "Usage: !%s" % args[0]
 
 def voice(args):
 	args = [arg.lower() for arg in args]
@@ -127,7 +138,7 @@ def cnick(args):
 
 def release(args):
 	if len(args) == 1:
-		write(("PRIVMSG", "NickServ"), "RELEASE %s %s" % (Bot.name, Bot.config.get(Bot.server, 'password')))
+		write(("PRIVMSG", "NickServ"), "RELEASE %s %s" % (Bot.name, Bot.config.get(Bot.network, 'password')))
 		write(("PRIVMSG", Bot.remote['sendee']), "Nick released.")
 
 def ident():
@@ -140,7 +151,6 @@ def join(args):
 			write(("JOIN", args[1]))
 		else:
 			write(("PRIVMSG", Bot.remote['sendee']), "I'm already in that channel, noob.")
-
 def part(args):
 	if len(args) == 1:
 		channel = Bot.remote['sendee']
@@ -166,7 +176,7 @@ def topic(bot, args):
 		topic = ' '.join(args[1:])
 		if Bot.remote['sendee'] == "#ualug":
 			if len(topic) <= 250:
-				write(("TOPIC", Bot.remote['sendee']), 'UALUG: %s [/%s] | http://ur1.ca/35yay - UALUG Quotes Database - good quotes go here | Join us on the forum: https://ualug.ece.auckland.ac.nz/community/forum/' % (topic, Bot.remote['nick']))
+				write(("TOPIC", Bot.remote['sendee']), 'UALUG: %s [/%s] | UALUG website: http://ualug.ece.auckland.ac.nz/' % (topic, Bot.remote['nick']))
 			else:
 				reply(Bot.remote['sendee'], "Sorry %s that topic is too long." % Bot.remote['nick'])
 		else:
@@ -225,10 +235,3 @@ def raw(args):
 	try: message = arguments[1]
 	except: message = None
 	Bot._sendq(left, message)
-	
-'''def execute(args):
-	import subprocess
-	arguments = [arg for arg in args[1:]]
-	try: result = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-	except OSError: result = "wut."
-	write(("PRIVMSG", Bot.remote['sendee']), result)'''

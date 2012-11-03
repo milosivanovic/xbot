@@ -1,5 +1,5 @@
 import urllib2
-import simplejson
+import json
 
 def search(bot, args):
 	if len(args) >= 2:
@@ -18,9 +18,9 @@ def search(bot, args):
 			country = ""
 			terms = ' '.join(args[1:])
 		result = urllib2.urlopen("http://ajax.googleapis.com/ajax/services/search/web?v=1.0&safe=off&q=%s&gl=%s" % (urllib2.quote(terms), country), timeout = 5)
-		jsondata = simplejson.load(result)
+		jsondata = json.load(result)
 		try:
-			url = jsondata['responseData']['results'][0]['unescapedUrl']
+			url = jsondata['responseData']['results'][0]['unescapedUrl'].encode('utf-8')
 			if url.startswith("http://www.youtube.com/"):
 				import scanner
 				title = "\n" + scanner.scan(bot, url)

@@ -13,7 +13,7 @@ def answer(bot, args):
 			}
 			if library.get(what):
 				if bot.inv['rooms'].get(bot.remote['receiver']):
-					if args[1] in bot.inv['rooms'].get(bot.remote['receiver']):
+					if args[1].lower() in [nick.lower() for nick in bot.inv['rooms'].get(bot.remote['receiver'])]:
 						return "%s: %s" % (args[1], library[what])
 					else:
 						return "%s: %s isn't in this channel." % (bot.remote['nick'], args[1])

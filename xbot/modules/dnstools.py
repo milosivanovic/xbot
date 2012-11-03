@@ -52,7 +52,7 @@ def lookup(bot, args):
 		return usage
 
 def wiki(bot, args):
-	if len(args) > 0:
+	if len(args) > 1:
 		result = lookitup('%s.wp.dg.cx' % '_'.join(args[1:]), 'TXT')
 		if result:
 			return bot._sendq(("NOTICE", bot.remote['nick']), ''.join(str(result[0]).split('"')))

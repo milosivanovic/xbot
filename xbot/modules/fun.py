@@ -68,7 +68,7 @@ def choose(bot, args):
 		return "Usage: !%s <item 1> or <item 2> [or <item n>] where 1 != 2 != n" % args[0]
 
 def m8b(bot, args):
-	if len(args) > 1 and len(args[1]) > 1:
+	if len(args) > 1:
 		responses = [
 			"It is certain.", "It is decidedly so.", "Without a doubt.", "Yes - definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Signs point to yes.", "Yes.",
 			"Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.",

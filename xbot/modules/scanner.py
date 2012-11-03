@@ -1,6 +1,7 @@
 import re
 import time
 import random
+import cleverbot
 
 def scan(bot, message = None):
 	results = []
@@ -16,18 +17,34 @@ def scan(bot, message = None):
 	
 	# someone is talking to the bot
 	if re.search('^%s(?:\:|,)' % re.escape(bot.nick.lower()), message_lowercase):
-		""""if 'cleverbot' not in bot.inv: bot.inv['cleverbot'] = {}
-		if channel not in bot.inv['cleverbot']:
-			bot.inv['cleverbot'][channel] = cleverbot.CleverBot()
-		query = message[len(bot.nick)+2:].decode('ascii', 'ignore')
-		results.append("%s: %s" % (nick, re.compile('cleverbot', re.IGNORECASE).sub(bot.nick, bot.inv['cleverbot'][channel].query(query))))"""
-		bot._sendq(("NOTICE", bot.remote['nick']), "This feature has been disabled.")
+		if 'cleverbot' not in bot.inv: bot.inv['cleverbot'] = {}
+		if bot.remote['receiver'] not in bot.inv['cleverbot']:
+			bot.inv['cleverbot'][bot.remote['receiver']] = cleverbot.CleverBot()
+		query = bot.remote['message'][len(bot.nick)+2:].decode('ascii', 'ignore')
+		results.append("%s: %s" % (bot.remote['nick'], re.compile('cleverbot', re.IGNORECASE).sub(bot.nick, bot.inv['cleverbot'][bot.remote['receiver']].query(query))))
+		#bot._sendq(("NOTICE", bot.remote['nick']), "This feature has been disabled.")
 	
 	# per 10% chance, count uppercase and act shocked
 	if len(bot.remote['message']) > 2 and random.random() > 0.9:
 		if count_upper(bot.remote['message']) > 80:
 			time.sleep(4)
 			results.append(random.choice([':' + 'O' * random.randint(1, 10), 'O' * random.randint(1, 10) + ':']))
+	
+	# per 1% chance, butt into someone's conversation
+	if random.random() > 0.99:
+		if not bot.remote['message'].startswith("\x01"):
+			words = bot.remote['message'].split()
+			if len(words) > 2:
+				for n in range(random.randint(1, 3)):
+					if random.random() > 0.5:
+						words[random.randint(1, len(words)-1)] = "butt"
+					else:
+						for m, word in enumerate(words):
+							if len(word) > 4 and m > 0:
+								if random.random() > 0.3:
+									words[m] = words[m][:-4] + "butt"
+			
+				results.append(' '.join(words))
 	
 	results = [result for result in results if result is not None]
 	try: return '\n'.join(results)
