@@ -119,3 +119,8 @@ def lotto(bot, args):
 	import random
 	balls = random.sample(range(1, 41), 7)
 	return "Winning lotto numbers are: %s & bonus ball %d with powerball %d" % (', '.join(str(s) for s in balls[:-1]), balls[6], random.randint(1, 10))
+
+def keygen(bot, args):
+	import string
+	import random
+	return '-'.join([''.join([random.choice(string.uppercase+string.digits) for n in range(5)]) for n in range(5)])

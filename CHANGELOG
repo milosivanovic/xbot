@@ -111,3 +111,15 @@
 
 		* module (js)
 				- new module
+
+2012-11-07  Milos Ivanovic  address@removed
+	* version bumped to 2.41
+
+	* major:
+		* core:
+				- add leniancy in IRC protocol parser to account for differences
+				  in RFC compliance between networks
+
+	* minor:
+		* module (io)
+				- add possibility of joining bot to a room using INVITE

@@ -49,7 +49,8 @@ def read(bot):
 				'imdb':			lambda: imdb.info(bot, args),
 				'usage':		lambda: usage.usage(bot, args),
 				'maxx':			lambda: maxx.times(bot, args),
-				'js':			lambda: js.execute(bot, args)
+				'js':			lambda: js.execute(bot, args),
+				'keygen':		lambda: fun.keygen(bot, args)
 			}
 			if bot.remote['nick'].lower() not in bot.inv['banned']:
 				if command in alibrary:
@@ -71,6 +72,8 @@ def read(bot):
 			args = bot.remote['message'][1:-1].split()[1:]
 			if type != "ACTION":
 				ctcp(type, args)
+		elif bot.remote['mid'] == "INVITE" and bot.remote['nick'].lower() not in bot.inv['banned']:
+			join(bot.remote['message'])
 		else:
 			if bot.init['registered'] and not bot.init['identified']:
 				if bot.remote['nick'] == "NickServ":
@@ -90,14 +93,14 @@ def read(bot):
 
 	else:
 		if (bot.remote['mid'].startswith("4") or bot.remote['mid'].startswith("5")) and bot.remote['mid'] != "462":
-			reply(bot.previous['user'], "Message from %s: Error #%s: %s" % (bot.remote['server'], bot.remote['mid'], bot.remote['message']))
+			reply(bot.previous.get('user') or bot.admin, "Message from %s: Error #%s: %s" % (bot.remote['server'], bot.remote['mid'], bot.remote['message']))
 		if not bot.init['joined'] and not bot.init['registered']:
 			autojoin()
 
 def autojoin():
 	channels = Bot.config.get(Bot.network, 'channels').split(",")
 	for channel in channels:
-		join([None, channel.strip()])
+		join(channel.strip())
 	Bot.init['joined'] = True
 
 def ctcp(type, args):
@@ -145,12 +148,11 @@ def ident():
 	Bot._ident(Bot.name)
 	Bot._login()
 
-def join(args):
-	if len(args) == 2:
-		if args[1] not in Bot.inv['rooms']:
-			write(("JOIN", args[1]))
-		else:
-			write(("PRIVMSG", Bot.remote['sendee']), "I'm already in that channel, noob.")
+def join(channel):
+	if channel not in Bot.inv['rooms']:
+		write(("JOIN", channel))
+	else:
+		write(("PRIVMSG", Bot.remote['sendee']), "I'm already in that channel, noob.")
 def part(args):
 	if len(args) == 1:
 		channel = Bot.remote['sendee']
