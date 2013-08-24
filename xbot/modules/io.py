@@ -104,7 +104,8 @@ def execute(context, func, *args):
 def autojoin():
 	channels = Bot.config.get(Bot.network, 'channels').split(",")
 	for channel in channels:
-		join(channel.strip())
+		# since join() is usually used with !join <channel>, we need the first param to be None
+		join([None, channel.strip()])
 	Bot.init['joined'] = True
 
 def ctcp(type, args):
@@ -149,14 +150,16 @@ def release(args):
 		write(("PRIVMSG", Bot.remote['sendee']), "Nick released.")
 
 def ident():
-	Bot._ident(Bot.name)
+	Bot._ident()
 	Bot._login()
 
-def join(channel):
-	if channel not in Bot.inv['rooms']:
-		write(("JOIN", channel))
-	else:
-		write(("PRIVMSG", Bot.remote['sendee']), "I'm already in that channel, noob.")
+def join(args):
+	if len(args) == 2:
+		channel = args[1]
+		if channel not in Bot.inv['rooms']:
+			write(("JOIN", channel))
+		else:
+			write(("PRIVMSG", Bot.remote['sendee']), "I'm already in that channel, noob.")
 def part(args):
 	if len(args) == 1:
 		channel = Bot.remote['sendee']
