@@ -82,7 +82,7 @@ def ghetto(bot, args):
 	if len(args) == 2:
 		real_name = args[1].lower()
 		ghetto_name = ""
-		
+
 		table = {
 					'a': 'sha', 'b': 'ni', 'c': 'ki', 'd': 'que',
 					'e': 'nay', 'f': 'qui', 'g': 'ti', 'h': 'la',
@@ -92,15 +92,15 @@ def ghetto(bot, args):
 					'u': 'kwa', 'v': 'ise', 'w': 'fi', 'x': 'quee',
 					'y': 'mi', 'z': 'si'
 		}
-		
+
 		for letter in real_name:
 			try: ghetto_name += table[letter] + "-"
 			except KeyError: return "Invalid name."
-		
+
 		return ghetto_name[:-1]
-	
+
 	return "Usage: !%s <first name>" % args[0]
-	
+
 def sorting_hat(bot, args):
 	if len(args) == 2:
 		nicks = bot.inv['rooms'].get(bot.remote['receiver'])
@@ -112,7 +112,7 @@ def sorting_hat(bot, args):
 				return "But they're not here!"
 		else:
 			return "It's a secret."
-			
+
 	return "Usage: !%s <nick>" % args[0]
 
 def lotto(bot, args):
@@ -124,3 +124,65 @@ def keygen(bot, args):
 	import string
 	import random
 	return '-'.join([''.join([random.choice(string.uppercase+string.digits) for n in range(5)]) for n in range(5)])
+
+def benis(bot, args):
+	import random
+	import unicodedata
+	import re
+	if len(args) > 1:
+		s = ' '.join(args[1:])
+		return reduce(lambda acc, f: f(acc), [
+			lambda s: s.lower(),
+			lambda s: unicodedata.normalize('NFKD', s.decode('latin1')).encode('ascii', 'ignore'),
+			lambda s: s.replace('x', 'cks'),
+			lambda s: re.sub(r'ing','in', s),
+			lambda s: re.sub(r'you', 'u', s),
+			lambda s: re.sub(r'oo', lambda _: random.randint(1, 5) * 'u', s),
+			lambda s: re.sub(r'\w\0', lambda x: random.randint(1, 2) * x.group(0)[0], s),
+			lambda s: re.sub(r'ck', lambda _: random.randint(1, 5) * 'g', s),
+			lambda s: re.sub(r'(t+)(?=[aeiouys]|\b)', lambda x: 'd' * len(x.group(1)), s),
+			lambda s: s.replace('p', 'b'),
+			lambda s: re.sub(r'\bthe\b', 'da', s),
+			lambda s: re.sub(r'\bc', 'g', s),
+			lambda s: re.sub(r'\bis\b', 'are', s),
+			lambda s: re.sub(r'c+(?![eiy])', lambda _: random.randint(1, 5) * 'g', s),
+			lambda s: re.sub(r'k+(?=[aeiouy]|\b)', lambda _: random.randint(1, 5) * 'g', s),
+			lambda s: re.sub(r'([?!.]|$)+', lambda x: (x.group(0) * random.randint(2, 5)) + " " + "".join((":" * random.randint(1, 2)) + ("D" * random.randint(1, 4)) for _ in range(random.randint(2, 5))), s),
+		], s)
+	else:
+		return "Usage: !%s <English sentence>" % args[0]
+
+def nab(bot, args):
+	result = "TU M'ENTENDS? :@"
+	if len(args) > 1:
+		nicks = bot.inv['rooms'].get(bot.remote['receiver'])
+		nick_arguments = args[1:]
+		for nick_arg in nick_arguments:
+			if nick_arg.lower() not in [nick.lower() for nick in nicks]:
+				return "nn"
+		if len(args) == 2:
+			return "%s: TU M'ENTENDS? :@" % ', '.join(nick_arguments)
+		else:
+			return "%s: VOUS M'ENTENDEZ? :@" % ', '.join(nick_arguments)
+	return result
+
+def frites(bot, args):
+	result = "ferme un peu ta gueule, va m'faire un steak frite ! (https://transfer.sh/HCwNv/frites.ogg)"
+	if len(args) > 1:
+		nicks = bot.inv['rooms'].get(bot.remote['receiver'])
+		nick_arguments = args[1:]
+		for nick_arg in nick_arguments:
+			if nick_arg.lower() not in [nick.lower() for nick in nicks]:
+				return "nn"
+		if len(args) == 2:
+			return "%s: ferme un peu ta gueule, va m'faire un steak frite ! (https://transfer.sh/HCwNv/frites.ogg)" % ', '.join(nick_arguments)
+		else:
+			return "!%s: FRITES ET POUR UN SEUL!" % args[0]
+	return result
+
+def monsieurp(bot, args):
+	return "\x01ACTION fait sauter la fesse de monsieurp\x01"
+
+def sysinfo(bot, args):
+	import os
+	return '\n'.join([os.popen('uname -a').read(), os.popen('uptime').read()])
