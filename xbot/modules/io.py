@@ -61,9 +61,7 @@ def read(bot):
 						if bot.voice:
 							reply(bot.remote['sendee'], "%s: Can't do that, noob." % bot.remote['nick'])
 				elif bot.voice and command in clibrary:
-					try: result = clibrary[command]()
-					except __import__('urllib2').HTTPError: result = "!%s: derping the herp" % args[0]
-					except (__import__('urllib2').URLError, __import__('socket').timeout): result = "!%s: response timeout exceeded." % args[0]
+					result = execute(command, clibrary[command])
 					bot.previous['user'] = bot.remote['sendee']
 					if result:
 						reply(bot.remote['sendee'], result)
@@ -83,19 +81,25 @@ def read(bot):
 						bot.init['identified'] = True
 						__import__('time').sleep(3)
 						autojoin()
-			
+
 			if bot.voice:
 				# start scanning messages for certain data
-				try: response = scanner.scan(bot)
-				except (__import__('urllib2').URLError, __import__('socket').timeout): response = "fetch: response timeout exceeded."
-				if response:
-					reply(bot.remote['sendee'], response)
+				result = execute(None, scanner.scan, bot)
+				if result:
+					reply(bot.remote['sendee'], result)
 
 	else:
 		if (bot.remote['mid'].startswith("4") or bot.remote['mid'].startswith("5")) and bot.remote['mid'] != "462":
 			reply(bot.previous.get('user') or bot.admin, "Message from %s: Error #%s: %s" % (bot.remote['server'], bot.remote['mid'], bot.remote['message']))
 		if not bot.init['joined'] and not bot.init['registered']:
 			autojoin()
+
+def execute(context, func, *args):
+	try: result = func(*args)
+	except __import__('urllib2').HTTPError as e: result = "%s: error: %s" % ('!'+context if context else Bot.name, e)
+	except __import__('urllib2').URLError as e: result = "%s: error: %s" % ('!'+context if context else Bot.name, e)
+	except __import__('socket').timeout as e: result = "%s: error: timeout exceeded." % ('!'+context)
+	return result
 
 def autojoin():
 	channels = Bot.config.get(Bot.network, 'channels').split(",")
