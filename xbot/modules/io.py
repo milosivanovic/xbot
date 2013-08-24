@@ -244,3 +244,13 @@ def raw(args):
 	try: message = arguments[1]
 	except: message = None
 	Bot._sendq(left, message)
+
+def abort(args):
+	if len(Bot.bot.sendq) > 0:
+		length = len(Bot.bot.sendq)
+		del Bot.bot.sendq[:]
+		message = "Abort received. Send queue flushed (%d lines of backlog)." % length
+		Bot.bot._log('dbg', message)
+		reply(Bot.remote['sendee'], message)
+	else:
+		reply(Bot.remote['sendee'], "Send queue is already empty.")
