@@ -21,7 +21,7 @@ def search(bot, args):
 		jsondata = json.load(result)
 		try:
 			url = jsondata['responseData']['results'][0]['unescapedUrl'].encode('utf-8')
-			if url.startswith("http://www.youtube.com/"):
+			if url.startswith("http://www.youtube.com/") or url.startswith("https://www.youtube.com/"):
 				import scanner
 				title = "\n" + scanner.scan(bot, url)
 			if country:
