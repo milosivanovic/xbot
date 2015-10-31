@@ -2,8 +2,10 @@ import datetime
 import scanner
 
 # user modules
-import wolframalpha, googleapi, dnstools, tell
-import fun, man, quotes, lotto, eval, imdb, usage, maxx, js
+import wolframalpha, googleapi, tell
+import fun, man, quotes, lotto, eval, imdb, usage
+import maxx, js, monitoring, translate, wikipedia
+import etymology, ud
 
 def read(bot):
 	global Bot
@@ -29,28 +31,27 @@ def read(bot):
 			clibrary = {
 				'topic':		lambda: topic(bot, args),
 				'help':			lambda: "Available commands: %s" % ', '.join(sorted(clibrary.keys())),
+				'abort':		lambda: abort(args),
 				'time':			lambda: time(bot, args),
 				'say':			lambda: say(bot, args),
 				'calc':			lambda: wolframalpha.wa(bot, args),
 				'go':			lambda: googleapi.search(bot, args),
-				'lookup':		lambda: dnstools.lookup(bot, args),
-				'wiki':			lambda: dnstools.wiki(bot, args),
+				'wiki':			lambda: wikipedia.wiki(bot, args),
 				'tell':			lambda: tell.answer(bot, args),
 				'twss':			lambda: fun.twss(bot, args),
 				'cookie':		lambda: fun.cookie(bot, args),
-				'spin':			lambda: fun.spin(bot, args),
-				'man':			lambda: man.man(bot, args),
 				'choose':		lambda: fun.choose(bot, args),
 				'8ball':		lambda: fun.m8b(bot, args),
-				'ghetto':		lambda: fun.ghetto(bot, args),
-				'sortinghat': 	lambda: fun.sorting_hat(bot, args),
-				'lotto':		lambda: lotto.get_results(bot, args),
 				'quotes':		lambda: quotes.get_quote(bot, args),
-				'imdb':			lambda: imdb.info(bot, args),
-				'usage':		lambda: usage.usage(bot, args),
-				'maxx':			lambda: maxx.times(bot, args),
 				'js':			lambda: js.execute(bot, args),
-				'keygen':		lambda: fun.keygen(bot, args)
+				'benis':		lambda: fun.benis(bot, args),
+				'tr':			lambda: translate.translate(bot, args),
+				'nab':			lambda: fun.nab(bot, args),
+				'frites':		lambda: fun.frites(bot, args),
+				'etym':			lambda: etymology.etym(bot, args),
+				'mrpass':		lambda: fun.monsieurp(bot, args),
+				'sysinfo':		lambda: fun.sysinfo(bot, args),
+				'ud':			lambda: ud.ud(bot, args)
 			}
 			if bot.remote['nick'].lower() not in bot.inv['banned']:
 				if command in alibrary:
