@@ -10,21 +10,21 @@ def get_quote(bot, args):
 	def sql(query, vars):
 		try:
 			return cursor.execute(query, vars)
-		except MySQLdb.OperationalError as e:
+		except Exception as e:
 			bot._sendq(("PRIVMSG", bot.remote['sendee']), "!quotes: %s" % re.match("Got error '(.+)' from regexp", e[1]).group(1))
 			return None
-	
+
 	def gen_kw(keywords):
 		result = ""
 		for keyword in keywords:
 			result += (" AND message LIKE '%%%s%%'" % re.escape(keyword)).replace("%", "%%")
 		return result
-		
+
 	if len(args) > 1:
-	
+
 		channel = bot.remote['receiver']
 		nick = bot.remote['nick']
-		
+
 		if args[1].lower() != bot.nick.lower():
 			if len(args) == 2:
 				if args[1] != "*":
@@ -39,24 +39,24 @@ def get_quote(bot, args):
 						return output_quote(bot, cursor)
 					elif numrows is not None:
 						return "No quotes in database yet."
-						
+
 			elif len(args) >= 3:
 				search = ' '.join(args[2:])
 				if args[1] != "*":
 					if search.startswith("/") and search.endswith("/"):
 						type = "regexp"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s AND message REGEXP %s ORDER BY rand() LIMIT 1", (channel, args[1], search[1:-1]))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s AND message REGEXP %s ORDER BY rand()", (channel, args[1], search[1:-1]))
 					else:
 						type = "keywords"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s " + gen_kw(search.split()) + " ORDER BY rand() LIMIT 1", (channel, args[1]))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s " + gen_kw(search.split()) + " ORDER BY rand()", (channel, args[1]))
 				else:
 					if search.startswith("/") and search.endswith("/"):
 						type = "regexp"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "' AND message REGEXP %s ORDER BY rand() LIMIT 1", (channel, search[1:-1]))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "' AND message REGEXP %s ORDER BY rand()", (channel, search[1:-1]))
 					else:
 						type = "keywords"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "'" + gen_kw(search.split()) + " ORDER BY rand() LIMIT 1", (channel,))
-						
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "'" + gen_kw(search.split()) + " ORDER BY rand()", (channel,))
+
 				if numrows > 0 and numrows <= 15:
 					if numrows > 1:
 						bot._sendq(("PRIVMSG", channel), '%s result%s sent.' % (numrows, '' if numrows == 1 else 's'))
@@ -78,16 +78,16 @@ def get_quote(bot, args):
 
 def output_quote(bot, cursor):
 	import scanner
-	
+
 	for row in cursor.fetchall():
 		if not row[4]:
 			prepend = "%s | <%s> %s"
 		else:
 			prepend = "%s | * %s %s"
-		
+
 		output = prepend % (str(datetime.datetime.fromtimestamp(int(row[1]))), row[3], row[5])
 		result = scanner.scan(bot, output) or ''
-		
+
 		if cursor.rowcount > 1:
 			bot._sendq(("NOTICE", bot.remote['nick']), '\n'.join([output, result]))
 		else:
