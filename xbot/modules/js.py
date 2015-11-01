@@ -11,7 +11,7 @@ def execute(bot, args):
 		try:
 			command = ' '.join(args[1:])
 			#cx.execute('window = {}; e = {}; e.e = "prop"')
-			#cx.execute(open('/usr/local/bin/irc/xbot/modules/jquery-1.8.2.min.js', 'r').read())
+			#bot.inv['js'].execute(open('/usr/local/bin/irc/xbot/modules/cleverbot.js', 'r').read())
 			bot.inv['js'].add_global('hashlib', __import__('hashlib'))
 			bot.inv['js'].max_time(10)
 			bot.inv['js'].max_memory(1000)
@@ -28,7 +28,7 @@ def execute(bot, args):
 						except IndexError:
 							pass
 					return "!%s: error pasting output." % args[0]
-				else:	
+				else:
 					return result
 			else:
 				return None
