@@ -13,11 +13,11 @@ def log(bot, channel, nick, message):
 			if line:
 				file.write("%s <%s> %s\r\n" % (date, nick, line))
 		action = 0
-		
+
 	file.close()
-	
+
 	db = botdb.BotDB(bot).connect()
-	
+
 	cursor = db.cursor()
 	if not message.startswith("!quote"):
 		if action: message = message[8:-1]
