@@ -42,17 +42,17 @@ INSTALLATION INSTRUCTIONS
 
 	; module configs must begin with 'module:' in their section name
 
-    [module: botdb]
-    ; below entries required for logger and quotes modules
+	[module: botdb]
+	; below entries required for logger and quotes modules
 	; see DATABASE file for table structure
-    db_host = localhost
-    db_user = xbot
-    db_pass = your-db-password
-    db_name = xbot_quotes
+	db_host = localhost
+	db_user = xbot
+	db_pass = your-db-password
+	db_name = xbot_quotes
 
 	[module: wolframalpha]
-    ; below entry required for wolframalpha module
-    wa_app_id = wolfram-alpha-app-id
+	; below entry required for wolframalpha module
+	wa_app_id = wolfram-alpha-app-id
 
 3. Give 'bot' file execute permissions, and run ./bot
 4. Enjoy!
