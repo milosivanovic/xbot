@@ -3,8 +3,8 @@ import scanner
 
 # user modules
 import wolframalpha, googleapi, tell
-import fun, man, quotes, lotto, eval, imdb, usage
-import maxx, js, monitoring, translate, wikipedia
+import fun, man, quotes, lotto, eval
+import js, translate, wikipedia
 import etymology, ud
 
 def read(bot):
