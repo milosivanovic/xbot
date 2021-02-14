@@ -1,6 +1,8 @@
 import datetime
-import botdb
 import re
+
+from . import botdb
+from . import scanner
 
 def get_quote(bot, args):
 
@@ -77,8 +79,6 @@ def get_quote(bot, args):
 		return "Usage: !%s <nick|*> [<keywords|/regexp/>]" % args[0]
 
 def output_quote(bot, cursor):
-	import scanner
-
 	for row in cursor.fetchall():
 		if not row[4]:
 			prepend = "%s | <%s> %s"

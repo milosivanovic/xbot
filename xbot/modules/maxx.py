@@ -1,4 +1,4 @@
-import urllib2
+import urllib.request
 import json
 import datetime
 
@@ -20,11 +20,11 @@ def times(bot, args):
 		except ValueError:
 			return error
 		
-		stops = json.loads(urllib2.urlopen('http://www.maxx.co.nz/base/StopInfo/FindStopsByNumber/%d.aspx' % stop).read())
+		stops = json.loads(urllib.request.urlopen('http://www.maxx.co.nz/base/StopInfo/FindStopsByNumber/%d.aspx' % stop).read())
 		if not stops['recordcount']:
 			return error
 			
-		raw_services = json.loads(urllib2.urlopen('http://www.maxx.co.nz/base/DepartureBoard2/RealTime/%d.aspx' % stop).read())
+		raw_services = json.loads(urllib.request.urlopen('http://www.maxx.co.nz/base/DepartureBoard2/RealTime/%d.aspx' % stop).read())
 		#services = json.loads('[{"route":"974","toLocation":"BEACH HAVEN","scheduledDeparture":"2012-08-13T12:00:00.000Z","estimatedDeparture":"2012-08-13T01:00:00.000Z","timestamp":"2012-08-13T11:52:12.937Z"}]')
 		results = []
 		

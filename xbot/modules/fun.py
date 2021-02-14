@@ -1,3 +1,6 @@
+from functools import reduce
+import random
+
 def twss(bot, args):
 	if len(args) > 1:
 		quote = ' '.join(args[1:])
@@ -18,7 +21,7 @@ def spin(bot, args):
 				_nicks = list(nicks)
 				_nicks.remove(bot.remote['nick'])
 				_nicks.remove(bot.nick)
-				winner = __import__('random').choice(_nicks)
+				winner = random.choice(_nicks)
 				return "The winner of %s is %s. Congratulations %s!" % (message, winner, winner)
 			else:
 				return "You want to spin me? Ok. Wheeeeeeee~"
@@ -74,7 +77,7 @@ def m8b(bot, args):
 			"Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.",
 			"Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."
 		]
-		return __import__('random').choice(responses)
+		return random.choice(responses)
 	else:
 		return "Usage: !%s <herp>" % args[0]
 
@@ -117,7 +120,7 @@ def sorting_hat(bot, args):
 
 def lotto(bot, args):
 	import random
-	balls = random.sample(range(1, 41), 7)
+	balls = random.sample(list(range(1, 41)), 7)
 	return "Winning lotto numbers are: %s & bonus ball %d with powerball %d" % (', '.join(str(s) for s in balls[:-1]), balls[6], random.randint(1, 10))
 
 def keygen(bot, args):
@@ -133,7 +136,7 @@ def benis(bot, args):
 		s = ' '.join(args[1:])
 		return reduce(lambda acc, f: f(acc), [
 			lambda s: s.lower(),
-			lambda s: unicodedata.normalize('NFKD', s.decode('latin1')).encode('ascii', 'ignore'),
+			lambda s: unicodedata.normalize('NFKD', s),
 			lambda s: s.replace('x', 'cks'),
 			lambda s: re.sub(r'ing','in', s),
 			lambda s: re.sub(r'you', 'u', s),

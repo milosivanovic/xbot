@@ -1,7 +1,12 @@
 import re
 import time
 import random
-import cleverbot
+import json
+import urllib.request
+import urllib.error
+import urllib.parse
+
+from . import cleverbot
 
 def scan(bot, message = None):
 	results = []
@@ -22,7 +27,7 @@ def scan(bot, message = None):
 		if 'cleverbot' not in bot.inv: bot.inv['cleverbot'] = {}
 		if bot.remote['receiver'] not in bot.inv['cleverbot']:
 			bot.inv['cleverbot'][bot.remote['receiver']] = cleverbot.CleverBot()
-		query = bot.remote['message'][len(bot.nick)+2:].decode('ascii', 'ignore')
+		query = bot.remote['message'][len(bot.nick)+2:]
 		results.append("%s: %s" % (bot.remote['nick'], re.compile('cleverbot', re.IGNORECASE).sub(bot.nick, bot.inv['cleverbot'][bot.remote['receiver']].query(query))))
 
 	# per 10% chance, count uppercase and act shocked
@@ -55,20 +60,19 @@ def scan(bot, message = None):
 	except TypeError: return None
 
 def youtube_title(code):
-	import urllib2, simplejson
-
 	try:
 		# try with embed json data (fast)
-		title = simplejson.load(urllib2.urlopen('http://www.youtube.com/oembed?url=http%%3A//www.youtube.com/watch?v%%3D%s&amp;format=json' % code, timeout = 5))['title']
-	except simplejson.JSONDecodeError:
+		url = urllib.parse.quote_plus('https://www.youtube.com/watch?v=%s' % code)
+		title = json.load(urllib.request.urlopen('https://www.youtube.com/oembed?url=%s' % url, timeout = 5))['title']
+	except json.JSONDecodeError:
 		# json data didn't return a title? forget about it
 		title = None
-	except urllib2.HTTPError as error:
+	except urllib.error.HTTPError as error:
 		# embed request not allowed? fallback to HTML (slower)
 		if error.code == 401:
 			import lxml.html
 			try:
-				title = lxml.html.document_fromstring(urllib2.urlopen('http://www.youtube.com/watch?v=%s' % code, timeout = 5).read().decode('utf-8')).xpath("//title/text()")[0].replace(' - YouTube', '')
+				title = lxml.html.document_fromstring(urllib.request.urlopen('https://www.youtube.com/watch?v=%s' % code, timeout = 5).read().decode('utf-8')).xpath("//title/text()")[0].replace(' - YouTube', '')
 				#[0].split("\n")[1].strip()
 			except IndexError:
 				title = None
@@ -79,7 +83,7 @@ def youtube_title(code):
 
 	if title:
 		if title != "YouTube - Broadcast Yourself.":
-			return "YouTube: \x02%s\x02" % title.encode('utf-8')
+			return "YouTube: \x02%s\x02" % title
 
 	return None
 

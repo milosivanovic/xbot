@@ -2,10 +2,10 @@
 
 import xbot
 import re
-from ConfigParser import ConfigParser
+import configparser
 
 if __name__ == "__main__":
-	config = ConfigParser()
+	config = configparser.ConfigParser()
 	if config.read('/etc/xbot/xbot.conf'):
 		for conf in config.__dict__['_sections']:
 			possible_network = re.match('^network:(.*?)$', conf).group(0).strip()
@@ -14,5 +14,5 @@ if __name__ == "__main__":
 				bot = xbot.Initialise([server.strip().split(':') for server in config.get(possible_network, 'servers').split(',')], config)
 				bot.run()
 	else:
-		print "Error: Cannot read xBot configuration file."
-		print "Please see INSTALL for help."
+		print("Error: Cannot read xBot configuration file.")
+		print("Please see INSTALL for help.")

@@ -2,9 +2,12 @@ import sys, os
 import socket
 import ssl
 import select
-import time, datetime
+import time
+import datetime
 import traceback
-import modules
+import importlib
+
+from . import modules
 
 class ServerDisconnectedException(Exception):
 	pass
@@ -42,12 +45,9 @@ class Client(object):
 	def connect(self, server, port):
 		socket.setdefaulttimeout(self.timeout)
 		self.sockets = Sockets()
-		try:
-			self.sockets.management.bind(('', 10000))
-			self._log("dbg", "Listening on management port (%s)..." % str(self.sockets.management.getsockname()))
-			self.sockets.management.listen(0)
-		except Exception:
-			pass
+		self.sockets.management.bind(('', 10000))
+		self._log("dbg", "Listening on management port (%s)..." % str(self.sockets.management.getsockname()))
+		self.sockets.management.listen(0)
 		self._log("dbg", "Connecting to Freenode (%s:%s)..." % (server, port))
 		self.sockets.irc.connect((server, port))
 		self.sockets.irc.setblocking(0)
@@ -127,7 +127,7 @@ class Client(object):
 		
 	def _recv(self, sock, bytes):
 		try:
-			data = sock.recv(bytes)
+			data = sock.recv(bytes).decode('utf8')
 		except ssl.SSLError as e:
 			if e.errno == ssl.SSL_ERROR_WANT_READ:
 				self._log("dbg", "Couldn't read: SSL_ERROR_WANT_READ, re-running select()")
@@ -171,7 +171,7 @@ class Client(object):
 				time.sleep(delay)
 			if self.verbose:
 				self._log('out', buffer)
-			sock.write(buffer)
+			sock.write(buffer.encode('utf8'))
 			break
 		
 		if len(self.sendq) > 0:
@@ -199,12 +199,12 @@ class Client(object):
 				else:
 					pad = "   "
 				
-				output = "%s %s %s" % (log, pad, line.encode('string_escape').replace("\\'", "'").replace("\\\\", "\\"))
-				print output
+				output = "%s %s %s" % (log, pad, line)
+				print(output)
 				for conn in self.sockets.inputs:
 					if conn != self.sockets.irc:
 						try:
-							conn.send(output + self.termop)
+							conn.send((output + self.termop).encode('utf8'))
 						except IOError:
 							pass
 
@@ -291,7 +291,7 @@ class Parser(object):
 
 				if arg == "PING":
 					self.bot._sendq(['PONG'], message)
-		except Exception, e:
+		except Exception as e:
 			self.bot._log("dbg", "Error parsing input: %s (%s)" % (repr(line), e))
 
 	def _sendq(self, left, right = None):
@@ -372,11 +372,11 @@ class Parser(object):
 
 	def _reload(self, args):
 		if len(args) == 1:
-			reload(modules)
+			importlib.reload(modules)
 			response = "Success: Reloaded all submodules."
 		elif len(args) == 2:
 			if os.path.exists("%s/modules/%s.py" % (os.path.dirname(__file__), args[1])):
-				reload(__import__('modules.' + args[1], globals(), locals(), fromlist = [], level = 1))
+				importlib.reload(__import__('modules.' + args[1], globals(), locals(), fromlist = [], level = 1))
 				response = "Success: Reloaded '%s' submodule." % args[1]
 			else:
 				response = "Failure: No such module '%s'." % args[1]
@@ -384,7 +384,7 @@ class Parser(object):
 			affected, unaffected = [], []
 			for module in args[1:]:
 				if os.path.exists("%s/modules/%s.py" % (os.path.dirname(__file__), module)):
-					reload(__import__('modules.' + module, globals(), locals(), fromlist = [], level = 1))
+					importlib.reload(__import__('modules.' + module, globals(), locals(), fromlist = [], level = 1))
 					affected.append(module)
 				else:
 					unaffected.append(module)

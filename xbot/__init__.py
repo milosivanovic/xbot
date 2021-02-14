@@ -1,7 +1,8 @@
-import irc
 import signal
 import socket
 import ssl
+
+from . import irc
 
 class Initialise(object):
 	def __init__(self, hosts, config):

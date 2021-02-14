@@ -1,4 +1,4 @@
-import MySQLdb
+import pymysql
 
 class BotDB(object):
 
@@ -10,4 +10,4 @@ class BotDB(object):
 
 	def connect(self):
 		if self.host and self.user and self.pw and self.db:
-			return MySQLdb.connect(host=self.host, user=self.user, passwd=self.pw, db=self.db)
+			return pymysql.connect(host=self.host, user=self.user, passwd=self.pw, db=self.db)

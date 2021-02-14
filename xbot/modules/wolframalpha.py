@@ -1,9 +1,11 @@
-import urllib2
+import urllib.request
+import urllib.parse
 import lxml.etree
+import random
 
 def wa(bot, args):
 	if len(args) > 1:
-		response = urllib2.urlopen("http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=plaintext&ip=103.250.91.91" % (bot.config.get('module: wolframalpha', 'wa_app_id'), urllib2.quote(' '.join(args[1:]))), timeout = 20)
+		response = urllib.request.urlopen("http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=plaintext&ip=103.250.91.91" % (bot.config.get('module: wolframalpha', 'wa_app_id'), urllib.parse.quote(' '.join(args[1:]))), timeout = 20)
 		result = lxml.etree.parse(response)
 		acceptable = [
 			'Result', 'Results', 'Solution', 'Value', 'Name', 'Derivative', 'Indefinite integral', 'Distance', 'Current result*',
@@ -22,14 +24,14 @@ def wa(bot, args):
 			if success: break
 		failure = result.xpath("/queryresult[@success='false']")
 		if success:
-			success = success.replace("\:", "\u")
-			return success.encode('utf-8').replace("Wolfram|Alpha", bot.name).replace("Stephen Wolfram", "Milos Ivanovic").strip()
+			success = success.replace("\:", "\\u")
+			return success.replace("Wolfram|Alpha", bot.name).replace("Stephen Wolfram", "Milos Ivanovic").strip()
 		elif failure:
 			alternatives = result.xpath("/queryresult/relatedexamples/relatedexample[@input]")
 			if alternatives:
-				return "Query not understood; suggestion%s: %s" % ('s' if len(alternatives) > 1 else '', ' | '.join([alt.values()[0].strip() for alt in alternatives]))
+				return "Query not understood; suggestion%s: %s" % ('s' if len(alternatives) > 1 else '', ' | '.join([list(alt.values())[0].strip() for alt in alternatives]))
 			else:
-				return __import__('random').choice(['Are you a wizard?', 'You must be a wizard.', "Plong.", "I like bytes.", "Mmmm... chocolate...", "Oooh look, a boat.", 'Boob.'])
+				return random.choice(['Are you a wizard?', 'You must be a wizard.', "Plong.", "I like bytes.", "Mmmm... chocolate...", "Oooh look, a boat.", 'Boob.'])
 		else:
 			return "No acceptable mathematical result."
 	else:

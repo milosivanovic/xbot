@@ -1,11 +1,15 @@
 import datetime
-import scanner
+import time
+import urllib
+import socket
+
+from . import scanner
 
 # user modules
-import wolframalpha, googleapi, tell
-import fun, man, quotes, lotto, eval
-import js, translate, wikipedia
-import etymology, ud
+from . import wolframalpha, googleapi, tell
+from . import fun, man, quotes, lotto, eval
+from . import js, translate, wikipedia
+from . import etymology, ud
 
 def read(bot):
 	global Bot
@@ -32,7 +36,7 @@ def read(bot):
 				'topic':		lambda: topic(bot, args),
 				'help':			lambda: "Available commands: %s" % ', '.join(sorted(clibrary.keys())),
 				'abort':		lambda: abort(args),
-				'time':			lambda: time(bot, args),
+				'time':			lambda: local_time(bot, args),
 				'say':			lambda: say(bot, args),
 				'calc':			lambda: wolframalpha.wa(bot, args),
 				'go':			lambda: googleapi.search(bot, args),
@@ -80,7 +84,7 @@ def read(bot):
 						bot._login()
 					elif "identified" in bot.remote['message']:
 						bot.init['identified'] = True
-						__import__('time').sleep(3)
+						time.sleep(3)
 						autojoin()
 
 			if bot.voice:
@@ -97,9 +101,9 @@ def read(bot):
 
 def execute(context, func, *args):
 	try: result = func(*args)
-	except __import__('urllib2').HTTPError as e: result = "%s: error: %s" % ('!'+context if context else Bot.name, e)
-	except __import__('urllib2').URLError as e: result = "%s: error: %s" % ('!'+context if context else Bot.name, e)
-	except __import__('socket').timeout as e: result = "%s: error: timeout exceeded." % ('!'+context)
+	except urllib.error.HTTPError as e: result = "%s: error: %s" % ('!'+context if context else Bot.name, e)
+	except urllib.error.URLError as e: result = "%s: error: %s" % ('!'+context if context else Bot.name, e)
+	except socket.timeout as e: result = "%s: error: timeout exceeded." % ('!'+context)
 	return result
 
 def autojoin():
@@ -121,7 +125,7 @@ def write(args, message = None):
 def reply(nick, message):
 	write(("PRIVMSG", nick), message)
 
-def time(bot, args):
+def local_time(bot, args):
 	if len(args) == 1:
 		now = datetime.datetime.now()
 		hour = int(now.strftime("%H"))

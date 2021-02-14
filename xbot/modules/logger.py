@@ -1,6 +1,7 @@
 import os
 import time, datetime
-import botdb
+
+from . import botdb
 
 def log(bot, channel, nick, message):
 	date = datetime.datetime.now().strftime("%b %d %Y %H:%M:%S")

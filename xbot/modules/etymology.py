@@ -1,7 +1,7 @@
-import urllib, urllib2
+import urllib.request
+import urllib.parse
 import lxml.html
 import re
-from bs4 import BeautifulSoup
 
 def unicode_truncate(s, length, encoding='utf-8'):
 	encoded = s.encode(encoding)[:length]
@@ -21,12 +21,12 @@ def etym(bot, args):
 			query = ' '.join(args[1:])
 
 		if lang == 'en':
-			url = 'http://www.etymonline.com/?term=%s' % urllib.quote_plus(query)
-			page = urllib2.urlopen(url).read()
+			url = 'http://www.etymonline.com/?term=%s' % urllib.parse.quote_plus(query)
+			page = urllib.request.urlopen(url).read()
 			result = lxml.html.fromstring(page).xpath("//div[@id='dictionary']/dl/dd//text()")
 		elif lang == 'fr':
-			url = 'http://www.cnrtl.fr/etymologie/%s' % urllib.quote_plus(query)
-			page = urllib2.urlopen(url).read()
+			url = 'http://www.cnrtl.fr/etymologie/%s' % urllib.parse.quote_plus(query)
+			page = urllib.request.urlopen(url).read()
 			result = lxml.html.fromstring(page).xpath("//div[@id='contentbox']//text()")
 		if result:
 			text = ''.join(result)
@@ -34,6 +34,6 @@ def etym(bot, args):
 			if len(text) > (435-overhead):
 				text = "%s... (%s)" % (unicode_truncate(text, 435-overhead), url)
 			#return ' | '.join(line.strip() for line in lines.splitlines() if line)
-			return re.sub('[\r\n]+', ' | ', re.sub(' +', ' ', text.strip())).encode('utf-8')
+			return re.sub('[\r\n]+', ' | ', re.sub(' +', ' ', text.strip()))
 		return '!%s: no etymology found in "%s"' % (args[0], lang)
 	return "!%s [@en|fr] <word>" % args[0]

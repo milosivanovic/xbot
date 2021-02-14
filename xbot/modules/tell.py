@@ -23,4 +23,4 @@ def answer(bot, args):
 					return "Triggering this command privately is not allowed."
 			else:
 				return None
-	return "Usage: !%s <nick> about <%s>" % (args[0], '|'.join(library.keys()))
+	return "Usage: !%s <nick> about <%s>" % (args[0], '|'.join(list(library.keys())))
