@@ -12,20 +12,6 @@ from . import modules
 class ServerDisconnectedException(Exception):
 	pass
 
-class Sockets(object):
-
-	def __init__(self):
-		self.management = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.management.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.management.setblocking(0)
-	
-		self.irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.irc = ssl.wrap_socket(self.irc)
-	
-		self.inputs = {self.irc: None, self.management: None}
-		self.outputs = []
-		self.errors = self.inputs
-
 
 class Client(object):
 
@@ -42,15 +28,29 @@ class Client(object):
 		self.version = 3.0
 		self.env = sys.platform
 
+		self.inputs = []
+		self.outputs = []
+		self.errors = self.inputs
+
+		self.mgmt_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.mgmt_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		self.mgmt_server.setblocking(0)
+
+		self.mgmt_server.bind(('', 10000))
+		self.mgmt_server.listen(0)
+		self._log("dbg", "Listening on management port (%s)..." % str(self.mgmt_server.getsockname()))
+		self.inputs.append(self.mgmt_server)
+
 	def connect(self, server, port):
 		socket.setdefaulttimeout(self.timeout)
-		self.sockets = Sockets()
-		self.sockets.management.bind(('', 10000))
-		self._log("dbg", "Listening on management port (%s)..." % str(self.sockets.management.getsockname()))
-		self.sockets.management.listen(0)
+
+		self.irc_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.irc_server = ssl.wrap_socket(self.irc_server)
+
 		self._log("dbg", "Connecting to Freenode (%s:%s)..." % (server, port))
-		self.sockets.irc.connect((server, port))
-		self.sockets.irc.setblocking(0)
+		self.irc_server.connect((server, port))
+		self.inputs.append(self.irc_server)
+		self.irc_server.setblocking(0)
 		self.connected = True
 
 		self._log("dbg", "Starting main loop...")
@@ -65,7 +65,7 @@ class Client(object):
 				break
 			
 			if len(self.sendq) > 0:
-				self._send(self.sockets.irc)
+				self._send(self.irc_server)
 			
 			if self.recvq:
 				lines = ''.join(self.recvq).split(self.termop)
@@ -85,24 +85,23 @@ class Client(object):
 			
 	def _select(self):
 		self._log("dbg", "Waiting for select()...")
-		ready_read, ready_write, in_error = select.select(self.sockets.inputs, self.sockets.outputs, self.sockets.errors, self.timeout)
+		ready_read, ready_write, in_error = select.select(self.inputs, self.outputs, self.errors, self.timeout)
 		self._log("dbg", "select() returned %d read, %d write, %d error" % (len(ready_read), len(ready_write), len(in_error)))
 		
 		for sock in ready_read:
-			if sock is self.sockets.management:
-				conn, addr = self.sockets.management.accept()
+			if sock is self.mgmt_server:
+				conn, addr = self.mgmt_server.accept()
 				conn.setblocking(0)
 				self._log("dbg", "New management connection from %s:%d" % (addr[0], addr[1]))
-				self.sockets.inputs[conn] = addr
 			else:
 				self._recv(sock, 1500)
 		
 		for sock in ready_write:
-			self.sockets.outputs.remove(sock)
+			self.outputs.remove(sock)
 		
 		for sock in in_error:
 			self._log("dbg", "select() caught socket #%d in exceptional condition" % sock.fileno())
-			del self.sockets.errors[conn]
+			self._shutdown()
 
 		if not ready_read and not ready_write and not in_error:
 			self._log("dbg", "select() timed out")
@@ -110,18 +109,19 @@ class Client(object):
 
 	def _shutdown(self):
 		self._log("dbg", "Shutting down IRC socket...")
-		self.sockets.irc.shutdown(socket.SHUT_RDWR)
-		#self.sockets.irc = self.sockets.irc.unwrap()
-		#self.sockets.irc.shutdown(socket.SHUT_RDWR)
-		self.sockets.irc.close()
+		self.irc_server.shutdown(socket.SHUT_RDWR)
+		#self.irc_server = self.irc_server.unwrap()
+		#self.irc_server.shutdown(socket.SHUT_RDWR)
+		self.irc_server.close()
 		#self.closing = True
+		self.inputs.remove(self.irc_server)
 		self.connected = False
 		raise ServerDisconnectedException
 	
 	def disconnect(self, n, frame):
 		if self.connected:
 			self._sendq(['QUIT'], "See ya~")
-			self._send(self.sockets.irc)
+			self._send(self.irc_server)
 		self.connected = False
 		sys.exit()
 		
@@ -138,10 +138,13 @@ class Client(object):
 				self._log('in', data)
 				self.recvq.append(data)
 		else:
-			if sock in self.sockets.inputs and sock is not None:
-				self._log("dbg", "Closed connection from %s:%d" % (self.sockets.inputs[sock][0], self.sockets.inputs[sock][1]))
-				del self.sockets.inputs[sock]
-				sock.close()
+			if sock in self.inputs:
+				addr = sock.getsockname()
+				self._log("dbg", "Closed connection from %s:%d" % (addr[0], addr[1]))
+				if sock == self.irc_server:
+					self._shutdown()
+			else:
+				raise RuntimeError("Socket connected to %s not found in socket list %s" % (sock.getsockname(), self.inputs))
 
 	def _sendq(self, left, right = None):
 		if right:
@@ -153,8 +156,8 @@ class Client(object):
 						self.sendq.append("%s :%s%s" % (' '.join(left), lines[n], self.termop))
 		else:
 			self.sendq.append("%s%s" % (' '.join(left), self.termop))
-		if self.sockets.irc not in self.sockets.outputs:
-			self.sockets.outputs.append(self.sockets.irc)
+		if self.irc_server not in self.outputs:
+			self.outputs.append(self.irc_server)
 
 	def _send(self, sock):
 		lines = len(self.sendq)
@@ -176,7 +179,7 @@ class Client(object):
 		
 		if len(self.sendq) > 0:
 			self._log('dbg', 'There are still %d bytes queued to be sent.' % sum(len(q) for q in self.sendq))
-			self.sockets.outputs.append(self.sockets.irc)
+			self.outputs.append(self.irc_server)
 		else:
 			self.delay = False
 
@@ -201,8 +204,8 @@ class Client(object):
 				
 				output = "%s %s %s" % (log, pad, line)
 				print(output)
-				for conn in self.sockets.inputs:
-					if conn != self.sockets.irc:
+				for conn in self.inputs:
+					if conn != self.irc_server:
 						try:
 							conn.send((output + self.termop).encode('utf8'))
 						except IOError:
