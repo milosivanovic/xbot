@@ -27,10 +27,10 @@ class Client(object):
 		self.timeout = 300
 		self.version = 3.0
 		self.env = sys.platform
-
 		self.inputs = []
 		self.outputs = []
-		self.errors = self.inputs
+
+		socket.setdefaulttimeout(self.timeout)
 
 		self.mgmt_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.mgmt_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -42,16 +42,18 @@ class Client(object):
 		self.inputs.append(self.mgmt_server)
 
 	def connect(self, server, port):
-		socket.setdefaulttimeout(self.timeout)
+		self.connected = False
 
 		self.irc_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.irc_server = ssl.wrap_socket(self.irc_server)
 
 		self._log("dbg", "Connecting to Freenode (%s:%s)..." % (server, port))
 		self.irc_server.connect((server, port))
-		self.inputs.append(self.irc_server)
+		self._log("dbg", "Connected.")
 		self.irc_server.setblocking(0)
 		self.connected = True
+
+		self.inputs.append(self.irc_server)
 
 		self._log("dbg", "Starting main loop...")
 		self._loop()
@@ -82,11 +84,14 @@ class Client(object):
 						n -= 1
 				if n > 1:
 					self._log('dbg', 'Parsed %d sentence%s.%s' % (n, '' if n == 1 else 's', ' More pending.' if self.recvq else ''))
+
+			if len(self.sendq) > 0:
+				self.outputs.append(self.irc_server)
 			
 	def _select(self):
 		self._log("dbg", "Waiting for select()...")
-		ready_read, ready_write, in_error = select.select(self.inputs, self.outputs, self.errors, self.timeout)
-		self._log("dbg", "select() returned %d read, %d write, %d error" % (len(ready_read), len(ready_write), len(in_error)))
+		ready_read, ready_write, _ = select.select(self.inputs, self.outputs, [], self.timeout)
+		self._log("dbg", "select() returned %d read, %d write" % (len(ready_read), len(ready_write)))
 		
 		for sock in ready_read:
 			if sock is self.mgmt_server:
@@ -95,15 +100,11 @@ class Client(object):
 				self._log("dbg", "New management connection from %s:%d" % (addr[0], addr[1]))
 			else:
 				self._recv(sock, 1500)
-		
+
 		for sock in ready_write:
 			self.outputs.remove(sock)
-		
-		for sock in in_error:
-			self._log("dbg", "select() caught socket #%d in exceptional condition" % sock.fileno())
-			self._shutdown()
 
-		if not ready_read and not ready_write and not in_error:
+		if not ready_read and not ready_write:
 			self._log("dbg", "select() timed out")
 			self._shutdown()
 
@@ -115,6 +116,10 @@ class Client(object):
 		self.irc_server.close()
 		#self.closing = True
 		self.inputs.remove(self.irc_server)
+		try:
+			self.outputs.remove(self.irc_server)
+		except ValueError:
+			pass
 		self.connected = False
 		raise ServerDisconnectedException
 	
@@ -139,12 +144,12 @@ class Client(object):
 				self.recvq.append(data)
 		else:
 			if sock in self.inputs:
-				addr = sock.getsockname()
+				addr = sock.getpeername()
 				self._log("dbg", "Closed connection from %s:%d" % (addr[0], addr[1]))
 				if sock == self.irc_server:
 					self._shutdown()
 			else:
-				raise RuntimeError("Socket connected to %s not found in socket list %s" % (sock.getsockname(), self.inputs))
+				raise RuntimeError("Socket connected to %s not found in socket list %s" % (sock.getpeername(), self.inputs))
 
 	def _sendq(self, left, right = None):
 		if right:
@@ -156,8 +161,6 @@ class Client(object):
 						self.sendq.append("%s :%s%s" % (' '.join(left), lines[n], self.termop))
 		else:
 			self.sendq.append("%s%s" % (' '.join(left), self.termop))
-		if self.irc_server not in self.outputs:
-			self.outputs.append(self.irc_server)
 
 	def _send(self, sock):
 		lines = len(self.sendq)
@@ -179,7 +182,6 @@ class Client(object):
 		
 		if len(self.sendq) > 0:
 			self._log('dbg', 'There are still %d bytes queued to be sent.' % sum(len(q) for q in self.sendq))
-			self.outputs.append(self.irc_server)
 		else:
 			self.delay = False
 

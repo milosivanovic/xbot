@@ -17,5 +17,5 @@ class Initialise(object):
 			if i == len(self.hosts): i = 0
 			try:
 				self.bot.connect(self.hosts[i][0], int(self.hosts[i][1]))
-			except (irc.ServerDisconnectedException, socket.error):
-				pass
+			except (irc.ServerDisconnectedException, socket.error) as e:
+				self.bot._log("dbg", "Exception: %s" % e)
