@@ -18,4 +18,4 @@ class Initialise(object):
 			try:
 				self.bot.connect(self.hosts[i][0], int(self.hosts[i][1]))
 			except (irc.ServerDisconnectedException, socket.error) as e:
-				self.bot._log("dbg", "Exception: %s" % e)
+				self.bot._log("dbg", "Exception: %s (%s)" % (type(e), e))
