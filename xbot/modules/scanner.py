@@ -5,6 +5,8 @@ import json
 import urllib.request
 import urllib.error
 import urllib.parse
+import io
+import PythonSed
 
 from . import cleverbot
 
@@ -29,6 +31,22 @@ def scan(bot, message = None):
 			bot.inv['cleverbot'][bot.remote['receiver']] = cleverbot.CleverBot()
 		query = bot.remote['message'][len(bot.nick)+2:]
 		results.append("%s: %s" % (bot.remote['nick'], re.compile('cleverbot', re.IGNORECASE).sub(bot.nick, bot.inv['cleverbot'][bot.remote['receiver']].query(query))))
+
+	# sed replace
+	if bot.remote['message'].startswith("s/"):
+		out = io.StringIO()
+		message_stringio = io.StringIO(bot.previous['message'])
+		sed = PythonSed.Sed()
+		sed.regexp_extended = True
+		try:
+			sed.load_string(bot.remote['message'])
+			sed_result = sed.apply(message_stringio, output=out)
+			if len(sed_result):
+				results.append("%s meant: %s" % (bot.remote['nick'], sed_result[0]))
+		except PythonSed.SedException as e:
+			results.append(str(e))
+		except IndexError:
+			pass
 
 	# per 10% chance, count uppercase and act shocked
 	#if len(bot.remote['message']) > 2 and random.random() > 0.9:

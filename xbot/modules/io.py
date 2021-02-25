@@ -92,6 +92,7 @@ def read(bot):
 				result = execute(None, scanner.scan, bot)
 				if result:
 					reply(bot.remote['sendee'], result)
+		bot.previous['message'] = bot.remote['message']
 
 	else:
 		if (bot.remote['mid'].startswith("4") or bot.remote['mid'].startswith("5")) and bot.remote['mid'] != "462":
