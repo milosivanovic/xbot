@@ -115,10 +115,10 @@ def autojoin():
 
 def ctcp(type, args):
 	if type == "VERSION":
-		write(("NOTICE", Bot.remote['nick']), "\x01VERSION %s:%s:%s\x01" % (Bot.name, str(Bot.version), Bot.env))
+		write(("NOTICE", Bot.remote['nick']), "\x01VERSION %s:%s:%s\x01" % ("woot", "1.0", "linux"))
 	elif type == "PING":
 		write(("NOTICE", Bot.remote['nick']), "\x01PING %s\x01" % args[0])
-		
+
 def write(args, message = None):
 	Bot._sendq(args, message)
 
