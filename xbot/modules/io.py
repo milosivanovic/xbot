@@ -174,7 +174,7 @@ def part(args):
 		write(("PART", channel))
 	else:
 		write(("PRIVMSG", Bot.remote['sendee']), "I'm not in that channel, noob.")
-	
+
 def kick(args):
 	if len(args) >= 2:
 		if args[1].lower() == Bot.nick.lower():
@@ -242,7 +242,7 @@ def say(bot, args):
 			write(("PRIVMSG", Bot.remote['sendee']), 'o_O')
 	else:
 		return "Usage: !say [#channel] [/me] <message>"
-		
+
 def raw(args):
 	arguments = ' '.join(args[1:]).split(" :")
 	left = arguments[0].split()

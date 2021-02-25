@@ -57,7 +57,7 @@ class Client(object):
 
 		self._log("dbg", "Starting main loop...")
 		self._loop()
-		
+
 	def _loop(self):
 		p = Parser(self, self.config)
 		while True:
@@ -65,10 +65,10 @@ class Client(object):
 
 			if self.closing:
 				break
-			
+
 			if len(self.sendq) > 0:
 				self._send(self.irc_server)
-			
+
 			if self.recvq:
 				lines = ''.join(self.recvq).split(self.termop)
 				del self.recvq[:]
@@ -87,12 +87,12 @@ class Client(object):
 
 			if len(self.sendq) > 0:
 				self.outputs.append(self.irc_server)
-			
+
 	def _select(self):
 		self._log("dbg", "Waiting for select()...")
 		ready_read, ready_write, _ = select.select(self.inputs, self.outputs, [], self.timeout)
 		self._log("dbg", "select() returned %d read, %d write" % (len(ready_read), len(ready_write)))
-		
+
 		for sock in ready_read:
 			if sock is self.mgmt_server:
 				conn, addr = self.mgmt_server.accept()
@@ -122,14 +122,14 @@ class Client(object):
 			pass
 		self.connected = False
 		raise ServerDisconnectedException
-	
+
 	def disconnect(self, n, frame):
 		if self.connected:
 			self._sendq(['QUIT'], "See ya~")
 			self._send(self.irc_server)
 		self.connected = False
 		sys.exit()
-		
+
 	def _recv(self, sock, bytes):
 		try:
 			data = sock.recv(bytes).decode('utf8')
@@ -179,7 +179,7 @@ class Client(object):
 				self._log('out', buffer)
 			sock.write(buffer.encode('utf8'))
 			break
-		
+
 		if len(self.sendq) > 0:
 			self._log('dbg', 'There are still %d bytes queued to be sent.' % sum(len(q) for q in self.sendq))
 		else:
@@ -203,7 +203,7 @@ class Client(object):
 					pad = _pad
 				else:
 					pad = "   "
-				
+
 				output = "%s %s %s" % (log, pad, line)
 				print(output)
 				for conn in self.inputs:
@@ -243,7 +243,7 @@ class Parser(object):
 		self.remote['receiver'] = None
 		self.remote['misc'] = None
 		self.remote['message'] = None
-		
+
 		try:
 			if line.startswith(':'):
 				if ' :' in line:
@@ -252,7 +252,7 @@ class Parser(object):
 				else:
 					args = line[1:].split()
 					trailing = args[-1]
-				
+
 				if "@" in args[0]:
 					client = args[0].split("@")
 					self.remote['nick'] = client[0].split("!")[0]
@@ -260,10 +260,10 @@ class Parser(object):
 					self.remote['host'] = client[1]
 				else:
 					self.remote['server'] = args[0]
-				
+
 				self.remote['mid'] = args[1]
 				self.remote['message'] = trailing
-				
+
 				try:
 					self.remote['receiver'] = args[2]
 				except IndexError:
@@ -276,7 +276,7 @@ class Parser(object):
 
 				if self.init['ident'] and self.remote['mid'] in ['376', '422']:
 					self.init['ready'] = True
-					
+
 				if self.init['ready']:
 					if self.remote['message']:
 						self.remote['sendee'] = self.remote['receiver'] if self.remote['receiver'] != self.nick else self.remote['nick']
@@ -288,7 +288,7 @@ class Parser(object):
 							error_message = "Traceback (most recent call last):\n" + '\n'.join(traceback.format_exc().split("\n")[-4:-1])
 							self.bot._sendq(("NOTICE", self.remote['sendee'] or self.admin), error_message)
 					if self.init['joined']:
-						self._updateNicks()				
+						self._updateNicks()
 			else:
 				arg	= line.split(" :")[0]
 				message = line.split(" :", 1)[1]
@@ -305,7 +305,7 @@ class Parser(object):
 			if type(right) != str: raise AssertionError("send queue must be <type 'str'> but was found as %s" % type(right))
 			modules.logger.log(self, left[1], self.nick, right)
 		self.bot._sendq(left, right)
-	
+
 	def _init(self):
 		if self.remote['message'] and self.init['ident'] is not True:
 			if self.remote['message']:
@@ -325,10 +325,10 @@ class Parser(object):
 		self.bot._sendq(("NICK", self.nick))
 		self.bot._sendq(("USER", self.nick, self.nick, self.nick), self.nick)
 		self.init['retries'] += 1
-	
+
 	def _login(self):
 		self.bot._sendq(("PRIVMSG", "NickServ"), "IDENTIFY %s" % self.config.get(self.network, 'password'))
-	
+
 	def _updateNicks(self):
 		if self.remote['mid'] == "JOIN":
 			if self.remote['nick'] == self.nick:
@@ -405,5 +405,5 @@ class Parser(object):
 			else:
 				response = "Failure: No such modules."
 			del affected, unaffected
-		
+
 		self._sendq(("PRIVMSG", self.remote['sendee']), response)
