@@ -22,7 +22,6 @@ class Client(object):
 		self.termop = "\r\n"
 		self.verbose = True
 		self.delay = False
-		self.closing = False
 		self.connected = False
 		self.timeout = 300
 		self.version = 3.0
@@ -62,9 +61,6 @@ class Client(object):
 		p = Parser(self, self.config)
 		while True:
 			self._select()
-
-			if self.closing:
-				break
 
 			if len(self.sendq) > 0:
 				self._send(self.irc_server)
@@ -110,16 +106,12 @@ class Client(object):
 
 	def _shutdown(self):
 		self._log("dbg", "Shutting down IRC socket...")
-		self.irc_server.shutdown(socket.SHUT_RDWR)
-		#self.irc_server = self.irc_server.unwrap()
-		#self.irc_server.shutdown(socket.SHUT_RDWR)
-		self.irc_server.close()
-		#self.closing = True
 		self.inputs.remove(self.irc_server)
 		try:
 			self.outputs.remove(self.irc_server)
 		except ValueError:
 			pass
+		self.irc_server.close()
 		self.connected = False
 		raise ServerDisconnectedException
 

@@ -1,6 +1,7 @@
 import signal
 import socket
 import ssl
+import time
 
 from . import irc
 
@@ -13,9 +14,16 @@ class Initialise(object):
 
 	def run(self):
 		i = 0
+		retry_count = 0
 		while True:
 			if i == len(self.hosts): i = 0
 			try:
 				self.bot.connect(self.hosts[i][0], int(self.hosts[i][1]))
 			except (irc.ServerDisconnectedException, socket.error) as e:
 				self.bot._log("dbg", "Exception: %s (%s)" % (type(e), e))
+				self.bot._log("dbg", "Restarting in 10 seconds...")
+				time.sleep(10)
+				self.bot._log("dbg", "==="*10)
+				if retry_count > 100:
+					raise e
+			retry_count += 1
