@@ -36,6 +36,6 @@ def ud(bot, args):
 			overhead = len(friendly_url)
 			if len(text) > (435-overhead):
 				text = "%s... (%s)" % (unicode_truncate(text, 435-overhead), friendly_url)
-			return re.sub('[\r\n]+', ' | ', re.sub(' +', ' ', text.strip()))
+			return re.sub('[\r\n]+', ' | ', re.sub(' +', ' ', re.sub(r'[\[\]]', '', text.strip())))
 		return '!%s: no urban dictionary result found in "%s"' % (args[0], lang)
 	return "Usage: !%s [@en] <word>" % args[0]
