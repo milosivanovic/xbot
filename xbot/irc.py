@@ -124,12 +124,27 @@ class Client(object):
 
 	def _recv(self, sock, bytes):
 		try:
-			data = sock.recv(bytes).decode('utf8', errors='ignore')
+			received_bytes = sock.recv(bytes)
 		except ssl.SSLError as e:
 			if e.errno == ssl.SSL_ERROR_WANT_READ:
 				self._log("dbg", "Couldn't read: SSL_ERROR_WANT_READ, re-running select()")
 				self._log("dbg", "recvq contains %s" % self.recvq)
 				return
+
+		try:
+			data = received_bytes.decode('utf8')
+		except UnicodeDecodeError:
+			# not Unicode; let's try CP-1252
+			try:
+				data = received_bytes.decode('cp1252')
+			except UnicodeDecodeError:
+				# Okay, let's try ISO-8859-1
+				try:
+					data = received_bytes.decode('iso8859-1')
+				except UnicodeDecodeError:
+					# Try to salvage line as UTF-8 if encoding is unknown
+					data = received_bytes.decode('utf8', errors='ignore')
+
 		if data:
 			if self.verbose:
 				self._log('in', data)
