@@ -124,7 +124,7 @@ class Client(object):
 
 	def _recv(self, sock, bytes):
 		try:
-			data = sock.recv(bytes).decode('utf8')
+			data = sock.recv(bytes).decode('utf8', errors='ignore')
 		except ssl.SSLError as e:
 			if e.errno == ssl.SSL_ERROR_WANT_READ:
 				self._log("dbg", "Couldn't read: SSL_ERROR_WANT_READ, re-running select()")
