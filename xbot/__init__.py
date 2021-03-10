@@ -21,9 +21,7 @@ class Initialise(object):
 				self.bot.connect(self.hosts[i][0], int(self.hosts[i][1]))
 			except (irc.ServerDisconnectedException, socket.error) as e:
 				self.bot._log("dbg", "Exception: %s (%s)" % (type(e), e))
-				self.bot._log("dbg", "Restarting in 10 seconds...")
+				self.bot._log("dbg", "Restarting in 10 seconds (retry #%d)..." % retry_count)
 				time.sleep(10)
-				self.bot._log("dbg", "==="*10)
-				if retry_count > 100:
-					raise e
+				self.bot._log("dbg", "====="*10)
 			retry_count += 1
