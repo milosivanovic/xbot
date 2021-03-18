@@ -43,8 +43,9 @@ class Client(object):
 	def connect(self, server, port):
 		self.connected = False
 
-		self.irc_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.irc_server = ssl.wrap_socket(self.irc_server)
+		self.unwrapped_irc_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.irc_server = ssl.wrap_socket(self.unwrapped_irc_server)
+		self.unwrapped_irc_server.close()
 
 		self._log("dbg", "Connecting to Freenode (%s:%s)..." % (server, port))
 		self.irc_server.connect((server, port))
