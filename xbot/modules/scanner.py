@@ -46,6 +46,9 @@ def scan(bot, message = None):
 				if len(pre_append) > 429:
 					pre_append = "%s..." % pre_append[:426]
 				results.append(pre_append)
+			else:
+				if bot.remote['message'].count('/') == 2:
+					results.append("%s: You're a dumdum." % bot.remote['nick'])
 		except PythonSed.SedException as e:
 			results.append(str(e))
 		except IndexError:
