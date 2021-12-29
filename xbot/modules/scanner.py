@@ -42,7 +42,10 @@ def scan(bot, message = None):
 			sed.load_string(bot.remote['message'])
 			sed_result = sed.apply(message_stringio, output=out)
 			if len(sed_result):
-				results.append("%s meant: %s" % (bot.remote['nick'], sed_result[0]))
+				pre_append = "%s meant: %s" % (bot.remote['nick'], sed_result[0])
+				if len(pre_append) > 429:
+					pre_append = "%s..." % pre_append[:426]
+				results.append(pre_append)
 		except PythonSed.SedException as e:
 			results.append(str(e))
 		except IndexError:
