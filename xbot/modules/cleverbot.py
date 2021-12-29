@@ -25,13 +25,15 @@ class CleverBot(object):
 		data += '&icognocheck=' + md5_digest
 		response = self.opener.open(self.url, data.encode('utf8')).read().decode('utf8')
 		values = response.splitlines()
-		self.vars['sessionid'] = values[1]
-		self.vars['vText8'] = values[3]
-		self.vars['vText7'] = values[4]
-		self.vars['vText6'] = values[5]
-		self.vars['vText5'] = values[6]
-		self.vars['vText4'] = values[7]
-		self.vars['vText3'] = values[8]
-		self.vars['vText2'] = values[9]
-
-		return values[0]
+		try:
+			self.vars['sessionid'] = values[1]
+			self.vars['vText8'] = values[3]
+			self.vars['vText7'] = values[4]
+			self.vars['vText6'] = values[5]
+			self.vars['vText5'] = values[6]
+			self.vars['vText4'] = values[7]
+			self.vars['vText3'] = values[8]
+			self.vars['vText2'] = values[9]
+			return values[0]
+		except IndexError:
+			return "Can't think right now. Probably need some rest."
