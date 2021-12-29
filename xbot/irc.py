@@ -9,7 +9,7 @@ import importlib
 
 from . import modules
 
-class ServerDisconnectedException(Exception):
+class ServerDisconnectedException(IOError):
 	pass
 
 
@@ -43,9 +43,9 @@ class Client(object):
 	def connect(self, server, port):
 		self.connected = False
 
-		self.unwrapped_irc_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.irc_server = ssl.wrap_socket(self.unwrapped_irc_server)
-		self.unwrapped_irc_server.close()
+		unwrapped_irc_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.irc_server = ssl.wrap_socket(unwrapped_irc_server)
+		unwrapped_irc_server.close()
 
 		self._log("dbg", "Connecting to Freenode (%s:%s)..." % (server, port))
 		self.irc_server.connect((server, port))
@@ -103,25 +103,23 @@ class Client(object):
 
 		if not ready_read and not ready_write:
 			self._log("dbg", "select() timed out")
-			self._shutdown()
+			raise ServerDisconnectedException
 
-	def _shutdown(self):
-		self._log("dbg", "Shutting down IRC socket...")
-		self.inputs.remove(self.irc_server)
+	def sigterm_handler(self, n, frame):
+		self.disconnect()
+		sys.exit()
+
+	def disconnect(self):
+		if self.connected:
+			self._sendq(['QUIT'], "See ya~")
+			self._send(self.irc_server)
 		try:
+			self.inputs.remove(self.irc_server)
 			self.outputs.remove(self.irc_server)
 		except ValueError:
 			pass
 		self.irc_server.close()
 		self.connected = False
-		raise ServerDisconnectedException
-
-	def disconnect(self, n, frame):
-		if self.connected:
-			self._sendq(['QUIT'], "See ya~")
-			self._send(self.irc_server)
-		self.connected = False
-		sys.exit()
 
 	def _recv(self, sock, bytes):
 		try:
@@ -155,7 +153,7 @@ class Client(object):
 				addr = sock.getpeername()
 				self._log("dbg", "Closed connection from %s:%d" % (addr[0], addr[1]))
 				if sock == self.irc_server:
-					self._shutdown()
+					raise ServerDisconnectedException
 			else:
 				raise RuntimeError("Socket connected to %s not found in socket list %s" % (sock.getpeername(), self.inputs))
 
