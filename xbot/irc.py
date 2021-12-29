@@ -319,8 +319,8 @@ class Parser(object):
 		if self.init['ident'] > 1:
 			while not self.init['retries'] or self.remote['mid'] in ['433', '437']:
 				if self.remote['mid'] == '433':
-					self.bot._log("dbg", "Nick already in use, waiting 30s...")
-					time.sleep(30)
+					self.bot._log("dbg", "Nick already in use, waiting 10s...")
+					time.sleep(10)
 				self._ident()
 				break
 			if self.remote['mid'] == "001":
