@@ -19,7 +19,7 @@ def get_quote(bot, args):
 	def gen_kw(keywords):
 		result = ""
 		for keyword in keywords:
-			result += (" AND message LIKE '%%%s%%'" % re.escape(keyword)).replace("%", "%%")
+			result += " AND message LIKE CONCAT('%%', %s, '%%')"
 		return result
 
 	if len(args) > 1:
@@ -50,29 +50,30 @@ def get_quote(bot, args):
 						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s AND message REGEXP %s ORDER BY rand()", (channel, args[1], search[1:-1]))
 					else:
 						type = "keywords"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s " + gen_kw(search.split()) + " ORDER BY rand()", (channel, args[1]))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s " + gen_kw(search.split()) + " ORDER BY rand()", (channel, args[1], *search.split()))
 				else:
 					if search.startswith("/") and search.endswith("/"):
 						type = "regexp"
 						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "' AND message REGEXP %s ORDER BY rand()", (channel, search[1:-1]))
 					else:
 						type = "keywords"
-						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "'" + gen_kw(search.split()) + " ORDER BY rand()", (channel,))
+						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "'" + gen_kw(search.split()) + " ORDER BY rand()", (channel, *search.split()))
 
-				if numrows > 0 and numrows <= 15:
-					if numrows > 1:
-						bot._sendq(("PRIVMSG", channel), '%s result%s sent.' % (numrows, '' if numrows == 1 else 's'))
-					return output_quote(bot, cursor)
-				elif numrows > 15:
-					if type == "keywords":
-						return "%d quotes found." % numrows
-					elif type == "regexp":
-						return "%d quotes matched." % numrows
-				elif numrows is not None:
-					if type == "keywords":
-						return "No quotes with keywords |%s| found." % search
-					elif type == "regexp":
-						return "No quotes with regexp %s matched." % search
+				if numrows is not None:
+					if numrows > 0 and numrows <= 15:
+						if numrows > 1:
+							bot._sendq(("PRIVMSG", channel), '%s result%s sent.' % (numrows, '' if numrows == 1 else 's'))
+						return output_quote(bot, cursor)
+					elif numrows > 15:
+						if type == "keywords":
+							return "%d quotes found." % numrows
+						elif type == "regexp":
+							return "%d quotes matched." % numrows
+					else:
+						if type == "keywords":
+							return "No quotes with keywords |%s| found." % search
+						elif type == "regexp":
+							return "No quotes with regexp %s matched." % search
 		else:
 			return "Nah. My own quotes are too contaminated."
 	else:
