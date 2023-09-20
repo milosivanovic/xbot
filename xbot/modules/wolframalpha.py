@@ -6,7 +6,10 @@ import random
 def wa(bot, args):
 	if len(args) > 1:
 		response = urllib.request.urlopen("http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=plaintext&ip=103.250.91.91" % (bot.config.get('module: wolframalpha', 'wa_app_id'), urllib.parse.quote(' '.join(args[1:]))), timeout = 20)
-		result = lxml.etree.parse(response)
+		try:
+			result = lxml.etree.parse(response)
+		except lxml.etree.XMLSyntaxError:
+			return "!calc: Error."
 		acceptable = [
 			'Result', 'Results', 'Solution', 'Value', 'Name', 'Derivative', 'Indefinite integral', 'Distance', 'Current result*',
 			'Scientific notation', 'Truth table', 'Differential equation solution', 'Decimal form', 'Decimal approximation',

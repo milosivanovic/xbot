@@ -1,5 +1,6 @@
 import datetime
 import re
+import pymysql
 
 from . import botdb
 from . import scanner
@@ -12,9 +13,13 @@ def get_quote(bot, args):
 	def sql(query, vars):
 		try:
 			return cursor.execute(query, vars)
-		except Exception as e:
-			bot._sendq(("PRIVMSG", bot.remote['sendee']), "!quotes: %s" % re.match("Got error '(.+)' from regexp", e[1]).group(1))
+		except pymysql.Error as e:
+			raise
+			bot._sendq(("PRIVMSG", bot.remote['sendee']), "!quotes: %s" % re.match("Got error '(.+)' from regexp", e.args[1]).group(1))
 			return None
+
+	#def sql_with_generated_strings(keywords):
+	#	return sql("SELECT * FROM quotes WHERE channel = %s AND nick REGEXP %s " + gen_kw(search.split()) + " ORDER BY rand()", (channel, args[1]))
 
 	def gen_kw(keywords):
 		result = ""
@@ -60,7 +65,7 @@ def get_quote(bot, args):
 						numrows = sql("SELECT * FROM quotes WHERE channel = %s AND nick != '" + re.escape(bot.nick) + "'" + gen_kw(search.split()) + " ORDER BY rand()", (channel, *search.split()))
 
 				if numrows is not None:
-					if numrows > 0 and numrows <= 15:
+					if numrows > 0 and numrows <= 20:
 						if numrows > 1:
 							bot._sendq(("PRIVMSG", channel), '%s result%s sent.' % (numrows, '' if numrows == 1 else 's'))
 						return output_quote(bot, cursor)

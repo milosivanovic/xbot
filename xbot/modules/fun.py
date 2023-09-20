@@ -126,14 +126,17 @@ def lotto(bot, args):
 def keygen(bot, args):
 	import string
 	import random
-	return '-'.join([''.join([random.choice(string.uppercase+string.digits) for n in range(5)]) for n in range(5)])
+	return '-'.join([''.join([random.choice(string.ascii_uppercase+string.digits) for n in range(5)]) for n in range(5)])
 
 def benis(bot, args):
 	import random
 	import unicodedata
 	import re
-	if len(args) > 1:
-		s = ' '.join(args[1:])
+	if len(args) > 0:
+		if len(args) > 1:
+			s = ' '.join(args[1:])
+		else:
+			s = bot.previous['message']
 		return reduce(lambda acc, f: f(acc), [
 			lambda s: s.lower(),
 			lambda s: unicodedata.normalize('NFKD', s),
@@ -188,4 +191,11 @@ def monsieurp(bot, args):
 
 def sysinfo(bot, args):
 	import os
-	return '\n'.join([os.popen('uname -a').read(), os.popen('uptime').read()])
+	uname = os.popen('uname -a')
+	uname_result = uname.read()
+	uname.close()
+
+	uptime = os.popen('uptime')
+	uptime_result = uptime.read()
+	uptime.close()
+	return '\n'.join([uname_result, uptime_result])

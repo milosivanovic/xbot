@@ -9,7 +9,9 @@ from . import scanner
 from . import wolframalpha, googleapi, tell
 from . import fun, man, quotes, lotto, eval
 from . import js, translate, wikipedia
-from . import etymology, ud
+from . import etymology, ud, covid19_tracker
+from . import giphy
+from . import openai
 
 def read(bot):
 	global Bot
@@ -55,7 +57,14 @@ def read(bot):
 				'etym':			lambda: etymology.etym(bot, args),
 				'mrpass':		lambda: fun.monsieurp(bot, args),
 				'sysinfo':		lambda: fun.sysinfo(bot, args),
-				'ud':			lambda: ud.ud(bot, args)
+				'ud':			lambda: ud.ud(bot, args),
+				'nzvax':		lambda: covid19_tracker.nzvax(bot, args),
+				'gif':			lambda: giphy.search(bot, args),
+				#'ghetto':		lambda: fun.ghetto(bot, args),
+				#'keygen':		lambda: fun.keygen(bot, args),
+				#'lotto':		lambda: fun.lotto(bot, args),
+				#'sorting_hat':  lambda: fun.sorting_hat(bot, args),
+				'prompt':		lambda: openai.set_prompt(bot, args)
 			}
 			if bot.remote['nick'].lower() not in bot.inv['banned']:
 				if command in alibrary:

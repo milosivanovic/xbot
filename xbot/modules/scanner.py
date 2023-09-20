@@ -9,6 +9,7 @@ import io
 import PythonSed
 
 from . import cleverbot
+from . import openai
 
 def scan(bot, message = None):
 	results = []
@@ -24,13 +25,20 @@ def scan(bot, message = None):
 
 	# someone is talking to the bot
 	if re.search('^%s(?:\:|,)' % re.escape(bot.nick.lower()), message_lowercase):
+		if bot.remote['nick'].lower() in bot.inv['banned']:
+			return
 		#bot._sendq(("NOTICE", bot.remote['nick']), "This feature has been disabled.")
 
-		if 'cleverbot' not in bot.inv: bot.inv['cleverbot'] = {}
-		if bot.remote['receiver'] not in bot.inv['cleverbot']:
-			bot.inv['cleverbot'][bot.remote['receiver']] = cleverbot.CleverBot()
+		#if 'cleverbot' not in bot.inv: bot.inv['cleverbot'] = {}
+		#if bot.remote['receiver'] not in bot.inv['cleverbot']:
+		#	bot.inv['cleverbot'][bot.remote['receiver']] = cleverbot.CleverBot()
+		#query = bot.remote['message'][len(bot.nick)+2:]
+		#results.append("%s: %s" % (bot.remote['nick'], re.compile('cleverbot', re.IGNORECASE).sub(bot.nick, bot.inv['cleverbot'][bot.remote['receiver']].query(query))))
+		if 'openai' not in bot.inv: bot.inv['openai'] = {}
+		if bot.remote['receiver'] not in bot.inv['openai']:
+			bot.inv['openai'][bot.remote['receiver']] = openai.OpenAIChat(bot)
 		query = bot.remote['message'][len(bot.nick)+2:]
-		results.append("%s: %s" % (bot.remote['nick'], re.compile('cleverbot', re.IGNORECASE).sub(bot.nick, bot.inv['cleverbot'][bot.remote['receiver']].query(query))))
+		results.append("%s: %s" % (bot.remote['nick'], re.compile('openai', re.IGNORECASE).sub(bot.nick, bot.inv['openai'][bot.remote['receiver']].ask(query))))
 
 	# sed replace
 	if bot.remote['message'].startswith("s/"):
