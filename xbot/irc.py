@@ -35,7 +35,7 @@ class Client(object):
 		self.mgmt_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.mgmt_server.setblocking(0)
 
-		self.mgmt_server.bind(('', 10000))
+		self.mgmt_server.bind(('', 10001))
 		self.mgmt_server.listen(0)
 		self._log("dbg", "Listening on management port (%s)..." % str(self.mgmt_server.getsockname()))
 		self.inputs.append(self.mgmt_server)
